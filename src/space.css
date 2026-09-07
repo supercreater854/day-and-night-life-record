@@ -1,4 +1,4 @@
-.global-music { position: fixed; top: max(19px, env(safe-area-inset-top)); right: 14px; z-index: 5; }
+.global-music { position: fixed; top: 19px; top: max(19px, env(safe-area-inset-top)); right: 14px; z-index: 5; }
 .music-button { border: 0; background: transparent; color: #7b8176; position: relative; width: 44px; height: 44px; padding: 11px; }
 .music-button.is-playing { color: #191c21; }
 .night .music-button { color: #899ab1; }
@@ -6,13 +6,13 @@
 .global-music .music-error { left: auto; right: 0; bottom: auto; top: 48px; }
 .record-dialog > .music-control, .image-viewer > .music-control { position: sticky; top: 0; margin-bottom: -44px; width: 44px; z-index: 2; background: inherit; border-radius: 50%; }
 .record-dialog > .music-control .music-error, .image-viewer > .music-control .music-error { bottom: auto; top: 48px; z-index: 4; }
-.record-dialog.sleep > .music-control, .record-dialog.meals > .music-control, .record-dialog.mood > .music-control { position: absolute; top: max(25px, env(safe-area-inset-top)); left: 22px; }
+.record-dialog.sleep > .music-control, .record-dialog.meals > .music-control, .record-dialog.mood > .music-control { position: absolute; top: 25px; top: max(25px, env(safe-area-inset-top)); left: 22px; }
 .image-viewer > .music-control { position: absolute; top: 25px; left: 22px; }
 .space-effects { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; contain: layout paint; }
 .space-effects * { pointer-events: none; }
 .ambient-spark { position: absolute; color: #d5e6ff; font-size: 12px; opacity: .1; animation: ambient-twinkle 6s ease-in-out infinite; transform-origin: center; }
 @keyframes ambient-twinkle { 0%, 35%, 100% { opacity: .08; transform: scale(.65); } 55% { opacity: .58; transform: scale(1.12); } 75% { opacity: .16; transform: scale(.85); } }
-.flight-area { position: absolute; inset: 0; width: min(100%, 650px); margin-inline: auto; }
+.flight-area { position: absolute; inset: 0; width: 100%; max-width: 650px; width: min(100%, 650px); margin-left: auto; margin-right: auto; margin-inline: auto; }
 .meteor { position: absolute; top: 0; left: 0; width: 88px; opacity: 0; offset-anchor: 97% 50%; offset-rotate: auto; animation: meteor-pass 60s linear infinite both; }
 .meteor-one { offset-path: var(--meteor-a); animation-delay: 3s; }
 .meteor-two { width: 58px; offset-path: var(--meteor-b); animation-delay: 25s; }

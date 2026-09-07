@@ -4,35 +4,41 @@
 .illustrated-statistics .coverage { margin: 9px 0 29px; font-size: 12px; }
 .illustrated-statistics .coverage strong { font-size: 13px; }
 .illustrated-statistics .stat-section { padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #a3a49a; }
-.illustrated-statistics .stat-heading { gap: 10px; margin-bottom: 18px; }
+.illustrated-statistics .stat-heading { margin-bottom: 18px; }
+.illustrated-statistics .stat-heading > * + * { margin-left: 10px; }
 .illustrated-statistics .stat-heading h1, .illustrated-statistics .stat-heading h2 { font-size: 25px; font-weight: 650; letter-spacing: .02em; }
 .illustrated-statistics .stat-heading small { font-size: 11px; white-space: nowrap; }
 .illustrated-statistics .stat-heading small b { color: #191c21; font-weight: 500; font-variant-numeric: tabular-nums; }
-.mood-counts { display: flex; gap: 12px; }
-.mood-counts > span { display: flex; gap: 4px; align-items: center; font-size: 12px; white-space: nowrap; }
+.mood-counts { display: flex; }
+.mood-counts > span + span { margin-left: 12px; }
+.mood-counts > span { display: flex; align-items: center; font-size: 12px; white-space: nowrap; }
+.mood-counts > span > * + * { margin-left: 4px; }
 .mood-counts svg { width: 23px; height: 23px; }
 .mood-counts small { color: var(--stat-muted); }
 .record-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; min-width: 0; }
 .record-strip.is-scrollable { grid-template-columns: none; grid-auto-columns: calc((100% - 24px) / 7); grid-auto-flow: column; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #c9c7bc transparent; padding-bottom: 8px; scroll-snap-type: x proximity; }
 .record-strip:focus-visible { outline: 2px solid #a77925; outline-offset: 3px; }
-.record-day { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; scroll-snap-align: start; }
+.record-day { display: flex; flex-direction: column; align-items: center; min-width: 0; scroll-snap-align: start; }
+.record-day > * + * { margin-top: 4px; }
 .record-symbol { width: 100%; height: auto; max-width: 47px; display: block; flex-shrink: 0; }
 .record-symbol.is-empty { opacity: .34; }
 .record-day .record-symbol { margin-bottom: 5px; }
 .record-date { color: #626762; font-size: 10px; font-variant-numeric: tabular-nums; }
 .record-weekday { font-size: 10px; color: #626762; }
 .record-day.is-today .record-date, .record-day.is-today .record-weekday { color: #191c21; font-weight: 650; }
-.distribution-heading { display: flex; gap: 9px; align-items: baseline; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid #d8d7cf; }
+.distribution-heading { display: flex; align-items: baseline; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid #d8d7cf; }
+.distribution-heading > * + * { margin-left: 9px; }
 .distribution-heading h2 { margin: 0; font-size: 14px; font-weight: 550; letter-spacing: 0; }
 .distribution-heading > span { color: var(--stat-muted); font-size: 10px; }
 .illustrated-statistics .mood-distribution { margin-top: 17px; gap: 8px; }
-.illustrated-statistics .mood-distribution > div { font-size: 11px; gap: 7px; }
+.illustrated-statistics .mood-distribution > div { font-size: 11px; }
 .distribution-face { display: block; line-height: 0; }
 .distribution-face svg > circle:first-child { fill: var(--face-fill); }
 .illustrated-statistics .mood-distribution b { font-size: 18px; line-height: 1.3; font-weight: 500; font-variant-numeric: tabular-nums; }
-.metric-summary { display: flex; align-items: center; gap: 17px; margin: 0 0 20px; }
+.metric-summary { display: flex; align-items: center; margin: 0 0 20px; }
 .metric-summary > .record-symbol { width: 73px; max-width: none; }
-.metric-summary > div { display: flex; flex-direction: column; gap: 5px; }
+.metric-summary > div { display: flex; flex-direction: column; margin-left: 17px; }
+.metric-summary > div > * + * { margin-top: 5px; }
 .metric-summary strong { font-size: 32px; font-weight: 550; line-height: 1.2; letter-spacing: -.8px; font-variant-numeric: tabular-nums; }
 .metric-summary strong small { font-size: 23px; }
 .metric-summary > div > span { font-size: 12px; color: #686d66; }
@@ -46,18 +52,19 @@
   .illustrated-statistics .stat-heading { margin-bottom: 22px; }
   .illustrated-statistics .stat-heading h1, .illustrated-statistics .stat-heading h2 { font-size: 29px; }
   .illustrated-statistics .stat-heading small { font-size: 13px; }
-  .mood-counts { gap: 22px; }
+  .mood-counts > span + span { margin-left: 22px; }
   .mood-counts > span { font-size: 14px; }
   .record-date, .record-weekday { font-size: 12px; }
   .illustrated-metric { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr); gap: 22px; align-items: center; }
-  .metric-summary { margin: 0; gap: 12px; }
+  .metric-summary { margin: 0; }
+  .metric-summary > div { margin-left: 12px; }
   .metric-summary strong { font-size: clamp(25px, 3.7vw, 34px); }
   .metric-summary > .record-symbol { width: 75px; }
   .illustrated-statistics .mood-distribution svg { width: 42px; height: 42px; }
 }
 @media (max-width: 350px) {
   .illustrated-statistics .statistics-content { padding-inline: 16px; }
-  .mood-counts { gap: 7px; }
+  .mood-counts > span + span { margin-left: 7px; }
   .mood-counts svg { width: 20px; height: 20px; }
   .illustrated-statistics .stat-heading h1, .illustrated-statistics .stat-heading h2 { font-size: 23px; }
 }

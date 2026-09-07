@@ -1,21 +1,24 @@
 /* The update inherits the original flat artwork and cream/navy palette. */
 .app { position: relative; }
 .clock-intro { font-size: 11px; font-weight: 500; letter-spacing: .2px; }
-.save-notice { position: absolute; bottom: 132px; left: 16px; right: 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 13px; color: #51564d; animation: appear .25s ease-out; }
+.save-notice { position: absolute; bottom: 132px; left: 16px; right: 16px; display: flex; flex-direction: column; align-items: center; font-size: 13px; color: #51564d; animation: appear .25s ease-out; }
+.save-notice > * + * { margin-top: 4px; }
 .save-notice button { border: 0; background: none; padding: 10px 18px; min-height: 44px; color: #191c21; font-size: 13px; }
 .save-notice button span { margin-left: 5px; }
 .saved-sleep .moon-button, .saved-meals .sun-button { animation: saved-pop .6s ease-out; }
 @keyframes saved-pop { 30% { transform: scale(1.07) rotate(-3deg); } 65% { transform: scale(.98); } }
 @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-.extra-meals { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; }
-.diary-mood { display: flex; align-items: center; gap: 8px; }
+.extra-meals { display: flex; justify-content: space-between; margin-top: 10px; }
+.extra-meals > * + * { margin-left: 12px; }
+.diary-mood { display: flex; align-items: center; }
+.diary-mood > * + * { margin-left: 8px; }
 .diary-mood svg { width: 30px; height: 30px; }
 .daily-details strong { max-width: 78%; }
 .daily-details small { overflow-wrap: anywhere; line-height: 1.7; }
 .star-explanation { margin: -10px auto 24px; max-width: 280px; }
 .data-entry { display: block; border: 0; background: none; padding: 12px 20px; margin: 0 auto 24px; font-size: 12px; color: #72756b; min-height: 44px; }
 .data-entry span { margin-left: 6px; }
-.data-dialog { height: min(850px, 100svh); }
+.data-dialog { height: 100vh; max-height: 850px; height: min(850px, 100svh); }
 .data-dialog .close-button { position: sticky; top: 0; right: 0; margin-left: auto; background: #f7f5ee; border-radius: 50%; font-size: 30px; z-index: 1; }
 .data-content { max-width: 380px; margin: 10px auto 30px; }
 .data-content h1 { text-align: left; font-size: 25px; margin: 0 0 12px; }
@@ -28,7 +31,8 @@
 .data-import { width: 100%; border: 1.5px solid #191c21; min-height: 48px; border-radius: 7px; background: none; margin: 10px 0 15px; }
 .restore-preview fieldset { border: 0; padding: 0; margin: 18px 0; }
 .restore-preview legend { font-size: 13px; margin-bottom: 12px; }
-.restore-preview label { display: flex; align-items: center; gap: 8px; font-size: 12px; min-height: 44px; }
+.restore-preview label { display: flex; align-items: center; font-size: 12px; min-height: 44px; }
+.restore-preview label > * + * { margin-left: 8px; }
 .restore-preview input { accent-color: #191c21; }
 .backup-filename { overflow-wrap: anywhere; color: #777c71; }
 .offline-state { color: #5c6b4d; }
@@ -36,13 +40,14 @@
 .star-map { animation: appear .35s ease-out; }
 .today-location text { fill: #ffe4a0; font-size: 10px; letter-spacing: 1px; }
 .map-week .star-date { font-size: 8px; }
-.map-tools { display: flex; justify-content: space-between; align-items: center; width: min(100%, 440px); padding: 0 22px; margin: 8px auto 0; flex-shrink: 0; font-size: 10px; color: #7e8ca2; }
+.map-tools { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 440px; width: min(100%, 440px); padding: 0 22px; margin: 8px auto 0; flex-shrink: 0; font-size: 10px; color: #7e8ca2; }
+.map-tools > * + * { margin-left: 6px; }
 .map-tools button { background: none; border: 0; padding: 10px 0 10px 10px; min-height: 44px; font-size: 11px; color: #d0d6dc; }
-.week-day-picker { display: flex; width: min(100%, 390px); margin: 0 auto; padding: 0 12px; flex-shrink: 0; }
-.week-day-picker button { flex: 1; min-width: 0; min-height: 48px; border: 0; background: none; color: #ccd4e1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 0; }
+.week-day-picker { display: flex; width: 100%; max-width: 390px; width: min(100%, 390px); margin: 0 auto; padding: 0 12px; flex-shrink: 0; }
+.week-day-picker button { flex: 1; min-width: 0; min-height: 48px; border: 0; background: none; color: #ccd4e1; display: flex; flex-direction: column; align-items: center; padding: 7px 0; }
 .week-day-picker span { font-size: 10px; opacity: .6; }
-.week-day-picker b { font-size: 12px; font-weight: 400; }
+.week-day-picker b { margin-top: 5px; font-size: 12px; font-weight: 400; }
 .startup { max-width: 420px; margin: 20vh auto; padding: 24px; line-height: 1.8; text-align: center; }
 .startup button { padding: 12px 24px; border: 2px solid #191c21; background: #ffda6e; border-radius: 6px; }
-@media (max-height: 700px) { .save-notice { bottom: 108px; font-size: 11px; gap: 0; } .save-notice button { padding: 5px 12px; min-height: 32px; font-size: 11px; } .map-tools { margin-top: 0; } }
+@media (max-height: 700px) { .save-notice { bottom: 108px; font-size: 11px; } .save-notice > * + * { margin-top: 0; } .save-notice button { padding: 5px 12px; min-height: 32px; font-size: 11px; } .map-tools { margin-top: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }

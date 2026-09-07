@@ -29,12 +29,13 @@
 @keyframes return-ring { from { opacity: .8; transform: scale(.8); } to { opacity: 0; transform: scale(1.65); } }
 .diary-reading .diary-content { max-width: 350px; }
 .diary-reading .diary-star { width: 152px; height: 126px; margin: 22px auto 14px; }
-.reading-mood { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 12px; color: #76796f; margin-bottom: 26px; }
+.reading-mood { display: flex; justify-content: center; align-items: center; font-size: 12px; color: #76796f; margin-bottom: 26px; }
+.reading-mood > * + * { margin-left: 8px; }
 .reading-mood svg { width: 30px; height: 30px; }
 .reading-facts { border-top: 2px solid #191c21; border-bottom: 1px solid #d8d7ce; padding: 13px 0; margin: 0; }
-.reading-facts > div { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; font-size: 14px; }
+.reading-facts > div { display: flex; justify-content: space-between; padding: 9px 0; font-size: 14px; }
 .reading-facts dt { color: #7b7e73; flex-shrink: 0; }
-.reading-facts dd { margin: 0; text-align: right; }
+.reading-facts dd { margin: 0 0 0 16px; text-align: right; }
 .reading-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; font-size: 15px; margin: 26px 0; }
 .diary-reading .diary-media { margin-top: 24px; }
 .diary-reading .media-gallery { gap: 10px; }
@@ -44,7 +45,7 @@
 .diary-save-status { text-align: center; }
 .diary-save-status.success { animation: appear 180ms ease-out; color: #61714c; }
 .music-control { position: relative; flex-shrink: 0; }
-.map-tools { gap: 6px; padding: 0 15px; }
+.map-tools { padding: 0 15px; }
 .map-tools .music-button { padding: 10px; width: 44px; height: 44px; position: relative; color: #8090a7; }
 .music-button svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .map-tools .music-button.is-playing { color: #ffe4a0; }
