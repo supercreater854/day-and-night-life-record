@@ -6,13 +6,15 @@
 
 ## CloudBase 邮箱登录
 
-- SDK：`@cloudbase/js-sdk` 3.9.2，认证模块延迟加载。
+- SDK：`@cloudbase/js-sdk` 3.9.2，使用认证模块与 PostgreSQL Web SDK（`app.rdb()`）。
 - 环境：`daynight-d2g3dj5fs4734fda7`，地域：`ap-shanghai`。
 - 正式域名：`https://daynight.zenmehui.fun`。该域名需已加入 CloudBase 身份认证的安全域名配置。
 - 登录入口位于页面左上角。输入邮箱获取 6 位验证码，SDK 调用 `signInWithOtp({ email })`；用户输入验证码后调用本次请求返回的 `verifyOtp({ token })`。
 - SDK 使用 `persistence: 'local'` 保存认证会话；刷新后通过 `getSession()` 恢复，并通过 `onAuthStateChange()` 同步登录、退出和令牌刷新状态。
 - 验证码只保存在当前登录弹层内存中。前端只包含公开的环境 ID 和地域，没有管理员 API Key、Secret 或私钥。
-- 账号仅用于建立认证闭环，没有连接数据库，也没有把现有 localStorage、日记或 IndexedDB 媒体绑定到账号。
+- 每次保存每日记录时先写原有 `localStorage`，登录用户随后按“用户 + 日期”覆盖写入 `public.daily_records`；云端失败不会回滚本地，并在页面明确提示。
+- 登录后读取当前用户的云端每日记录并叠加显示。PostgreSQL 复合主键避免同一用户同一天重复，RLS 以 JWT `sub` 限制只能读取和写入本人行。
+- 不批量上传旧本地记录；图片、视频和草稿仍只保存在原有 IndexedDB / localStorage 中。
 
 ## 打开与运行
 
@@ -55,7 +57,7 @@ npm run preview
 - 页面通过 `repository.js` 保存正式记录和草稿。图片、视频继续存 IndexedDB，JSON 记录继续存 localStorage。
 - 恢复操作先在同一 IndexedDB 事务中写入媒体与待完成的记录快照，再更新 localStorage。中断后会在下次启动时继续恢复；未完成期间阻止继续编辑。
 
-当前没有账号与跨设备自动同步。备份文件由用户手动保管和转移。旧版原始记录 JSON 可导入；旧版媒体须以完整备份结构提供，不能仅靠记录 JSON 带入。
+登录账号会同步保存后的每日记录；旧本地历史不会自动迁移，媒体与草稿也不参与同步。完整备份仍由用户手动保管和转移；旧版媒体须以完整备份结构提供，不能仅靠记录 JSON 带入。
 
 ## 目录
 
@@ -64,6 +66,9 @@ life-record-next/
 ├── index.html
 ├── package.json / package-lock.json
 ├── vite.config.js
+├── cloudbase/
+│   ├── daily-records.json
+│   └── migrations/202609070001_daily_records.sql
 ├── public/
 │   ├── manifest.webmanifest
 │   ├── icon.svg
@@ -73,6 +78,8 @@ life-record-next/
 ├── src/
 │   ├── main.jsx
 │   ├── App.jsx
+│   ├── AuthControl.jsx
+│   ├── cloudbase.js / cloudRecords.js
 │   ├── Clock.jsx
 │   ├── RecordDialog.jsx
 │   ├── DiaryDialog.jsx
@@ -86,6 +93,7 @@ life-record-next/
 ├── tests/
 │   ├── model.test.js
 │   ├── iteration.test.js
+│   ├── cloudRecords.test.js
 │   └── update.test.js
 ├── VERIFICATION.json
 └── dist/                  构建后的可部署静态文件

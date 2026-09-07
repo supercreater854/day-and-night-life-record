@@ -10,6 +10,8 @@ import MusicButton from './MusicButton';
 import { ONBOARDING_KEY, saveRecord } from './repository';
 import { listMediaDates } from './media';
 import { dateKey, makeRecord, readRecords, STORAGE_KEY, suggestedSleep, starPoints } from './model';
+import { cloudbaseDb, userId } from './cloudbase';
+import { loadCloudRecords, syncCloudRecord } from './cloudRecords';
 
 const AuthControl = lazy(() => import('./AuthControl'));
 
@@ -17,7 +19,10 @@ export default function App() {
   const [page, setPage] = useState('today');
   const [now, setNow] = useState(() => new Date());
   const [initial] = useState(() => { try { return { records: readRecords(), error: '' }; } catch { return { records: {}, error: '无法读取本地记录，请检查浏览器存储权限后刷新。' }; } });
-  const [records, setRecords] = useState(initial.records);
+  const [localRecords, setLocalRecords] = useState(initial.records);
+  const [cloudRecords, setCloudRecords] = useState({});
+  const [cloudUser, setCloudUser] = useState(null);
+  const [syncError, setSyncError] = useState('');
   const [error, setError] = useState(initial.error);
   const [modal, setModal] = useState(null);
   const [dataOpen, setDataOpen] = useState(false);
@@ -27,12 +32,14 @@ export default function App() {
   const [returned, setReturned] = useState(null);
   const [diarySaved, setDiarySaved] = useState(0);
   const closeTimer = useRef(null), pendingPulse = useRef(null);
+  const syncGeneration = useRef(0), syncQueues = useRef(new Map());
   const music = useBgm();
   const [intro, setIntro] = useState(() => { try { return !localStorage.getItem(ONBOARDING_KEY) && !Object.keys(initial.records).length; } catch { return false; } });
   const [diaryDate, setDiaryDate] = useState(null);
   const [mediaDates, setMediaDates] = useState([]);
   const [mediaRevision, setMediaRevision] = useState(0);
   const [mediaReadError, setMediaReadError] = useState('');
+  const records = useMemo(() => ({ ...localRecords, ...cloudRecords }), [localRecords, cloudRecords]);
   const allRecords = useMemo(() => {
     const combined = { ...records };
     for (const date of mediaDates) combined[date] = { ...makeRecord(date, records[date]), hasMedia: true };
@@ -57,10 +64,24 @@ export default function App() {
     window.addEventListener('focus', refreshDate);
     window.addEventListener('pageshow', refreshDate);
     document.addEventListener('visibilitychange', refreshDate);
-    const sync = event => { if (event.key === STORAGE_KEY) { try { setRecords(readRecords()); setError(''); } catch { setError('无法读取本地记录，请刷新后重试。'); } } };
+    const sync = event => { if (event.key === STORAGE_KEY) { try { setLocalRecords(readRecords()); setError(''); } catch { setError('无法读取本地记录，请刷新后重试。'); } } };
     window.addEventListener('storage', sync);
     return () => { clearTimeout(timer); window.removeEventListener('focus', refreshDate); window.removeEventListener('pageshow', refreshDate); document.removeEventListener('visibilitychange', refreshDate); window.removeEventListener('storage', sync); };
   }, []);
+  const cloudUid = userId(cloudUser);
+  useEffect(() => {
+    const generation = ++syncGeneration.current;
+    let active = true;
+    setCloudRecords({});
+    setSyncError('');
+    if (!cloudUid) return () => { active = false; };
+    loadCloudRecords(cloudbaseDb, cloudUid).then(next => {
+      if (active && syncGeneration.current === generation) setCloudRecords(current => ({ ...next, ...current }));
+    }).catch(() => {
+      if (active && syncGeneration.current === generation) setSyncError('云端记录读取失败，本地记录仍可正常使用。');
+    });
+    return () => { active = false; };
+  }, [cloudUid]);
   useEffect(() => {
     if (!notice || modal) return;
     const timer = setTimeout(() => setNotice(null), notice.star ? 9000 : 3500);
@@ -84,10 +105,29 @@ export default function App() {
   }
   function writeRecord(date, patch) {
     try {
-      const next = saveRecord(date, patch);
-      setRecords(next);
+      const next = saveRecord(date, patch, records[date]);
+      setLocalRecords(next);
       setError('');
-      return next[date];
+      const saved = next[date];
+      if (cloudUid) {
+        setCloudRecords(current => ({ ...current, [date]: saved }));
+        const generation = syncGeneration.current;
+        const queueKey = `${cloudUid}:${date}`;
+        const previous = syncQueues.current.get(queueKey) ?? Promise.resolve();
+        const operation = previous.catch(() => {}).then(() => {
+          if (generation !== syncGeneration.current) return;
+          return syncCloudRecord(cloudbaseDb, cloudUid, saved);
+        });
+        syncQueues.current.set(queueKey, operation);
+        operation.then(() => {
+          if (generation === syncGeneration.current) setSyncError('');
+        }).catch(() => {
+          if (generation === syncGeneration.current) setSyncError('云端同步失败，本地记录已保存。');
+        }).finally(() => {
+          if (syncQueues.current.get(queueKey) === operation) syncQueues.current.delete(queueKey);
+        });
+      }
+      return saved;
     } catch { setError('这次还没有保存。请允许浏览器本地存储后重试。'); return false; }
   }
   function save(patch) {
@@ -107,9 +147,9 @@ export default function App() {
       if (!askMood && modal.type !== 'mood') setPulse(modal.type);
     }
   }
-  function refreshRecords() { setRecords(readRecords()); setMediaRevision(value => value + 1); }
+  function refreshRecords() { setLocalRecords(readRecords()); setMediaRevision(value => value + 1); }
   return <div className={`app ${page === 'map' ? 'night' : ''}`}>
-    <Suspense fallback={null}><AuthControl /></Suspense>
+    <Suspense fallback={null}><AuthControl onUserChange={setCloudUser} /></Suspense>
     {!modal && !diaryDate && !dataOpen && <div className="global-music"><MusicButton music={music} /></div>}
     {page === 'today' ? <>
       <header className="date"><time dateTime={today}>{now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日</time></header>
@@ -117,6 +157,7 @@ export default function App() {
     </> : page === 'map' ? <StarMap key={mapFocus} focusToday={mapFocus > 0} records={mapRecords.current} today={today} onDay={setDiaryDate} returned={returned} effectsPaused={!!diaryDate || !!modal} /> : <><Statistics records={allRecords} today={today} /><button className="data-entry" onClick={() => setDataOpen(true)}>数据与使用 <span aria-hidden="true">↗</span></button></>}
     {notice && !modal && page === 'today' && <div className={`save-notice ${notice.star ? 'star-arrival' : ''}`} role="status" key={notice.id}>{notice.star && <svg className="saved-star" viewBox="-40 -40 80 80" aria-hidden="true"><polygon points={starPoints(0, 0, 18 * notice.record.starSize)} fill="#ffe4a0" opacity={notice.record.starBrightness} /></svg>}<span>{notice.text}</span>{notice.star && <button onClick={() => { setMapFocus(value => value + 1); setPage('map'); setNotice(null); }}>看看今天的星 <span aria-hidden="true">↗</span></button>}</div>}
     {error && !modal && <p className="page-error" role="alert">{error}</p>}
+    {syncError && !modal && <p className="page-error" role="alert">{syncError}</p>}
     {mediaReadError && <p className="page-error" role="alert">{mediaReadError}</p>}
     <nav className="bottom-nav" aria-label="页面切换">
       <button className={page === 'today' ? 'active' : ''} aria-current={page === 'today' ? 'page' : undefined} onClick={() => setPage('today')}>

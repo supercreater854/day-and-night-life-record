@@ -3,7 +3,7 @@ import { cloudbaseAuth, sessionUser, userEmail } from './cloudbase';
 
 const validEmail = value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-export default function AuthControl() {
+export default function AuthControl({ onUserChange }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +23,7 @@ export default function AuthControl() {
       listener?.data?.subscription?.unsubscribe?.();
     };
   }, []);
+  useEffect(() => { onUserChange?.(user); }, [onUserChange, user]);
 
   const email = userEmail(user);
   return <>
@@ -103,7 +104,7 @@ function AuthDialog({ user, onUser, onClose }) {
         <span className="auth-symbol signed" aria-hidden="true">✓</span>
         <h1 id="auth-title">已登录</h1>
         <p className="auth-email">{currentEmail || 'CloudBase 用户'}</p>
-        <p className="auth-note">当前记录仍保存在这台设备。</p>
+        <p className="auth-note">每日记录会保留在本机，并同步到你的账号。</p>
         <button className="auth-secondary" disabled={busy} onClick={signOut}>{busy ? '正在退出…' : '退出登录'}</button>
       </> : <>
         <span className="auth-symbol" aria-hidden="true">@</span>

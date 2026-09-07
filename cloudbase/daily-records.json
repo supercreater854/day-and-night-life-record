@@ -1,0 +1,9 @@
+{
+  "environmentId": "daynight-d2g3dj5fs4734fda7",
+  "region": "ap-shanghai",
+  "database": "PostgreSQL",
+  "table": "public.daily_records",
+  "permissionMode": "PostgreSQL RLS",
+  "permissionDescription": "authenticated 角色仅可读写 owner_id 等于 JWT sub 的行；owner_id 由数据库默认值生成。",
+  "uniqueKey": ["owner_id", "record_date"]
+}

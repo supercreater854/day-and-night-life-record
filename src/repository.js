@@ -4,9 +4,9 @@ import { openDB } from './media.js';
 export const DRAFT_KEY = 'life-record:drafts:v1';
 export const ONBOARDING_KEY = 'life-record:intro:v1';
 
-export function saveRecord(date, patch) {
+export function saveRecord(date, patch, baseRecord) {
   const records = readRecords();
-  const next = { ...records, [date]: makeRecord(date, records[date], patch) };
+  const next = { ...records, [date]: makeRecord(date, baseRecord ?? records[date], patch) };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   return next;
 }
