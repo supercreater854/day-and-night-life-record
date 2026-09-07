@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cloudbaseAuth, sessionUser, userEmail } from './cloudbase';
 
 const validEmail = value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -23,7 +23,7 @@ export default function AuthControl({ onUserChange }) {
       listener?.data?.subscription?.unsubscribe?.();
     };
   }, []);
-  useEffect(() => { onUserChange?.(user); }, [onUserChange, user]);
+  useLayoutEffect(() => { onUserChange?.(user); }, [onUserChange, user]);
 
   const email = userEmail(user);
   return <>

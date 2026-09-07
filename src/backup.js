@@ -1,6 +1,6 @@
-import { dateKey, localDate, makeRecord, readRecords, STORAGE_KEY, timeMinutes } from './model.js';
+import { dateKey, localDate, makeRecord, timeMinutes } from './model.js';
 import { allMedia } from './media.js';
-import { commitRestore, readDrafts } from './repository.js';
+import { commitRestore, readDrafts, readLocalRecords, recordsStorageKey } from './repository.js';
 
 export const MAX_BACKUP_BYTES = 150 * 1024 * 1024;
 const validDate = key => typeof key === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(key) && dateKey(localDate(key)) === key;
@@ -40,7 +40,7 @@ export function validateBackup(input) {
   return { records, media, drafts, dates: [...new Set([...Object.keys(records), ...Object.keys(drafts), ...media.map(item => item.date)])].sort() };
 }
 
-export async function createBackup() {
+export async function createBackup(ownerUid = null) {
   const items = await allMedia();
   assert(items.reduce((sum, item) => sum + item.blob.size * 4 / 3, 0) < MAX_BACKUP_BYTES, '媒体较多，当前原型支持 150 MB 以内的备份。');
   const media = [];
@@ -50,20 +50,20 @@ export async function createBackup() {
     });
     media.push({ ...item, base64 });
   }
-  const blob = new Blob([JSON.stringify({ format: 'day-and-night-backup', version: 1, exportedAt: new Date().toISOString(), records: readRecords(), drafts: readDrafts(), media })], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ format: 'day-and-night-backup', version: 1, exportedAt: new Date().toISOString(), records: readLocalRecords(ownerUid), drafts: readDrafts(), media })], { type: 'application/json' });
   assert(blob.size <= MAX_BACKUP_BYTES, '当前原型支持 150 MB 以内的备份。');
   return blob;
 }
 
-export async function inspectConflicts(backup) {
-  const existing = new Set([...Object.keys(readRecords()), ...Object.keys(readDrafts()), ...(await allMedia()).map(item => item.date)]);
+export async function inspectConflicts(backup, ownerUid = null) {
+  const existing = new Set([...Object.keys(readLocalRecords(ownerUid)), ...Object.keys(readDrafts()), ...(await allMedia()).map(item => item.date)]);
   return backup.dates.filter(date => existing.has(date));
 }
 
-export async function restoreBackup(backup, policy = 'keep') {
-  const conflicts = new Set(await inspectConflicts(backup));
+export async function restoreBackup(backup, policy = 'keep', ownerUid = null) {
+  const conflicts = new Set(await inspectConflicts(backup, ownerUid));
   const selected = backup.dates.filter(date => policy === 'replace' || !conflicts.has(date));
-  const records = readRecords(), drafts = readDrafts();
+  const records = readLocalRecords(ownerUid), drafts = readDrafts();
   for (const date of selected) {
     delete records[date]; delete drafts[date];
     if (backup.records[date]) records[date] = backup.records[date];
@@ -71,9 +71,10 @@ export async function restoreBackup(backup, policy = 'keep') {
   }
   // Check localStorage capacity before touching media. The durable IDB journal
   // still covers a later write failure or a tab closing during the final step.
-  const original = localStorage.getItem(STORAGE_KEY);
-  localStorage.setItem(STORAGE_KEY + ':restore-check', JSON.stringify(records));
-  localStorage.removeItem(STORAGE_KEY + ':restore-check');
-  await commitRestore(records, drafts, backup.media.filter(item => selected.includes(item.date)), selected);
+  const recordsKey = recordsStorageKey(ownerUid);
+  const original = localStorage.getItem(recordsKey);
+  localStorage.setItem(recordsKey + ':restore-check', JSON.stringify(records));
+  localStorage.removeItem(recordsKey + ':restore-check');
+  await commitRestore(records, drafts, backup.media.filter(item => selected.includes(item.date)), selected, recordsKey);
   return { count: selected.length, previous: original !== null };
 }

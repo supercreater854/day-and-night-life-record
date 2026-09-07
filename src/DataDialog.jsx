@@ -3,7 +3,7 @@ import { createBackup, inspectConflicts, MAX_BACKUP_BYTES, restoreBackup, valida
 import { recoverRestore } from './repository';
 import MusicButton from './MusicButton';
 
-export default function DataDialog({ onClose, onRestored, music }) {
+export default function DataDialog({ onClose, onRestored, music, recordOwner }) {
   const ref = useRef(null), input = useRef(null);
   const [busy, setBusy] = useState(false), [status, setStatus] = useState(''), [error, setError] = useState('');
   const [preview, setPreview] = useState(null), [policy, setPolicy] = useState('keep');
@@ -21,7 +21,7 @@ export default function DataDialog({ onClose, onRestored, music }) {
   }
   async function download() {
     await run(async () => {
-      const blob = await createBackup();
+      const blob = await createBackup(recordOwner);
       const url = URL.createObjectURL(blob), link = document.createElement('a');
       link.href = url; link.download = `日与夜备份-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -35,13 +35,13 @@ export default function DataDialog({ onClose, onRestored, music }) {
       if (file.size > MAX_BACKUP_BYTES) throw new Error('当前原型支持 150 MB 以内的备份。');
       let parsed; try { parsed = JSON.parse(await file.text()); } catch { throw new Error('无法读取文件，请选择日与夜的 JSON 备份。'); }
       const backup = validateBackup(parsed);
-      const conflicts = await inspectConflicts(backup);
+      const conflicts = await inspectConflicts(backup, recordOwner);
       setPolicy('keep'); setPreview({ backup, conflicts, name: file.name });
     });
   }
   async function restore() {
     await run(async () => {
-      const result = await restoreBackup(preview.backup, policy);
+      const result = await restoreBackup(preview.backup, policy, recordOwner);
       onRestored(); setPreview(null); setStatus(`已恢复 ${result.count} 天的内容。`);
     });
   }

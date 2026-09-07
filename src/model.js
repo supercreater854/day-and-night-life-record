@@ -132,8 +132,8 @@ export function statistics(records, days) {
 }
 
 // Validate individual days so one damaged entry cannot discard the other days.
-export function readRecords(storage = localStorage) {
-  const raw = storage.getItem(STORAGE_KEY);
+export function readRecords(storage = localStorage, key = STORAGE_KEY) {
+  const raw = storage.getItem(key);
   if (!raw) return {};
   const data = JSON.parse(raw);
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid saved data');
