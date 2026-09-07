@@ -1,0 +1,10 @@
+{
+  "passed": [
+    "view/edit separation, empty sections hidden, saved feedback, preserved draft and deferred star change on return",
+    "BGM is opt-in; plays across diary view, pauses for video, page exit and background; no automatic resume",
+    "offline reload preserves diary/media and previously loaded BGM can be played manually",
+    "320px, 375px, desktop fit and reduced-motion support",
+    "music load failure leaves recording operational"
+  ],
+  "errors": []
+}

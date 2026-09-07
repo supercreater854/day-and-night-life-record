@@ -1,0 +1,16 @@
+{
+  "passed": [
+    "sleep, mood, extra meals, star rules and save feedback",
+    "draft survives reopening and reload; full backup includes image, video, saved text and draft",
+    "fresh-browser restore, video playback, keep/replace conflicts, invalid-file rejection",
+    "offline app reload, editing, persistence and media playback",
+    "375px, 320px and desktop overflow checks",
+    "interrupted restore completes on startup; exactly two media files retained",
+    "star-group zoom, keyboard navigation and nearby-region taps",
+    "conventional 12-hour three-hand clock, real-time ticking, midnight and focus/pageshow/visibility resync"
+  ],
+  "screenshots": "outputs/next-*.png",
+  "testedAt": "2026-09-04T07:30:01.827Z",
+  "browser": "Chrome desktop with mobile viewports; no physical-phone network claim",
+  "errors": []
+}

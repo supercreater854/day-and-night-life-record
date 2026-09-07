@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "reference fixture: 3/7 days, 7h20m, 2.7 meals, 2/3 good sleep days and 3/3 good meal days",
+    "weekly per-field recorded and empty icons",
+    "month strip scrolls; year has 12 month aggregates per metric",
+    "empty prior year displays no fabricated values",
+    "320/375/768/1440px across week/month/year: no horizontal page overflow",
+    "records persist on refresh"
+  ],
+  "errors": []
+}

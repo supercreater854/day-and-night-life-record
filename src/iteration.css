@@ -1,0 +1,96 @@
+/* Additive styles: keep the original clock, palette, and flat illustration. */
+button:disabled { opacity: .38; cursor: default; }
+input, select, textarea { font: inherit; color: inherit; max-width: 100%; }
+select, textarea { border: 1.5px solid #c8c8bf; border-radius: 6px; background: transparent; }
+select:focus-visible, textarea:focus-visible { outline: 2px solid #a77925; outline-offset: 3px; }
+.primary-button { border: 2px solid #191c21; border-radius: 7px; background: #ffda6e; min-height: 48px; font-weight: 500; margin-top: 25px; flex-shrink: 0; }
+.time-fields { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 15px; margin-top: 28px; }
+.time-fields > span { align-self: center; padding-top: 23px; }
+.time-field { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.time-field > span { font-size: 12px; color: #62665f; }
+.time-field select { height: 46px; padding: 0 8px; width: 100%; font-size: 17px; }
+.time-summary { margin: 14px 0 0; text-align: center; font-size: 12px; color: #73776e; line-height: 1.6; }
+.meal-time-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 30px; }
+.record-dialog.sleep .sleep-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.record-dialog.sleep .sleep-options button { font-size: 16px; }
+.record-dialog.sleep .dialog-symbol, .record-dialog.meals .dialog-symbol { width: 86px; height: 86px; }
+.record-dialog.meals h2 { margin-top: 32px; }
+.record-dialog.meals .dialog-content, .record-dialog.sleep .dialog-content { padding-bottom: 20px; }
+.period-controls { flex-shrink: 0; width: 100%; max-width: 520px; margin: 0 auto; padding: max(23px, env(safe-area-inset-top)) 18px 0; }
+.scale-options { display: flex; justify-content: center; gap: 27px; }
+.scale-options button { background: transparent; border: 0; border-bottom: 2px solid transparent; width: 40px; padding: 10px 0; color: #858b89; font-size: 14px; }
+.scale-options button[aria-pressed="true"] { color: inherit; border-color: currentColor; }
+.period-navigation { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 13px; }
+.period-navigation span { text-align: center; min-width: 205px; font-size: 12px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+.period-navigation button { background: none; border: 0; width: 40px; height: 38px; font-size: 26px; line-height: 1; }
+.night .scale-options button { color: #74849c; }
+.night .scale-options button[aria-pressed="true"] { color: #ffe4a0; }
+.night .period-navigation { color: #aab8ca; }
+.map-main { padding-top: 6px; }
+.map-week .star-map { max-width: 390px; }
+.map-month .star-map { max-width: 510px; }
+.star-date { fill: #aab8ca; font-size: 11px; letter-spacing: .5px; pointer-events: none; }
+.diary-dialog { height: min(900px, 100svh); padding: 32px 24px; }
+.diary-dialog .close-button, .image-viewer .close-button { font-size: 32px; font-weight: 300; }
+.diary-dialog .close-button { position: sticky; top: 0; right: 0; margin: 0 0 0 auto; background: #f7f5ee; border-radius: 50%; z-index: 1; }
+.diary-content { padding-top: 2px; max-width: 420px; margin: auto; }
+.diary-date { display: block; text-align: center; font-size: 14px; letter-spacing: 1px; }
+.diary-star { display: block; width: 180px; height: 150px; margin: 25px auto; background: #14233e; border-radius: 50%; }
+.daily-details { border-top: 2px solid #191c21; }
+.daily-details > button { display: flex; align-items: center; width: 100%; gap: 12px; border: 0; border-bottom: 1px solid #d8d7ce; padding: 18px 0; background: none; font-size: 13px; text-align: left; }
+.daily-details strong { margin-left: auto; text-align: right; font-size: 13px; font-weight: 500; }
+.daily-details small { display: block; font-size: 11px; color: #7b7d75; margin-top: 5px; }
+.daily-details > button > span:last-child { font-size: 20px; color: #8c8f85; }
+.diary-writing { margin-top: 30px; }
+.diary-writing > label { display: block; font-size: 15px; margin-bottom: 14px; }
+.diary-writing textarea { display: block; width: 100%; resize: vertical; min-height: 126px; line-height: 1.8; padding: 12px; font-size: 15px; }
+.text-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+.text-button { background: none; border: 0; padding: 10px 0; font-size: 12px; min-height: 40px; }
+.small-save { background: #ffda6e; border: 2px solid #191c21; border-radius: 5px; padding: 9px 16px; font-size: 12px; }
+.inline-status { font-size: 12px; color: #686e61; line-height: 1.6; }
+.media-add-actions { display: flex; gap: 24px; margin: 22px 0 12px; }
+.media-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.media-gallery figure { margin: 0; min-width: 0; }
+.media-gallery figure[data-media-kind="video"] { grid-column: 1 / -1; }
+.image-thumbnail { padding: 0; display: block; width: 100%; border: 0; background: transparent; }
+.image-thumbnail img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px; }
+.media-gallery video { display: block; width: 100%; max-height: 300px; background: #14233e; border-radius: 5px; }
+.media-gallery figcaption { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 11px; color: #696f63; }
+.media-gallery figcaption > span { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.media-gallery figcaption button { flex-shrink: 0; }
+.image-viewer { border: 0; background: #14233e; color: #f7f5ee; padding: 65px 15px 25px; width: min(900px, 100%); max-width: 100%; max-height: 100svh; margin: auto; }
+.image-viewer::backdrop { background: rgb(8 16 30 / .8); }
+.image-viewer > img { display: block; max-width: 100%; max-height: calc(100svh - 100px); object-fit: contain; margin: auto; }
+.statistics-main { flex: 1; width: 100%; }
+.statistics-content { max-width: 460px; padding: 0 26px 28px; margin: auto; }
+.coverage { font-size: 12px; color: #74796e; text-align: center; margin: 25px 0 32px; }
+.coverage strong { color: #191c21; font-weight: 500; }
+.stat-section { padding: 0 0 27px; margin-bottom: 27px; border-bottom: 2px solid #191c21; }
+.stat-section:last-child { border-bottom: none; margin-bottom: 0; }
+.stat-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+.stat-heading h1, .stat-heading h2 { font-size: 20px; margin: 0; text-align: left; }
+.stat-heading small { color: #777d72; font-size: 11px; }
+.mood-ratios { display: flex; justify-content: space-between; text-align: center; font-size: 12px; gap: 10px; }
+.mood-ratios > div { flex: 1; }
+.mood-expression { display: block; width: 46px; height: 46px; margin: auto; }
+.mood-ratios strong { display: block; font-size: 25px; font-weight: 500; margin-top: 8px; }
+.mood-distribution { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 24px; gap: 7px; }
+.mood-distribution > div { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 11px; }
+.mood-distribution svg { width: 38px; height: 38px; }
+.mood-distribution b { font-weight: 500; }
+.ratio-labels { display: flex; justify-content: space-between; font-size: 12px; }
+.ratio-labels b { font-weight: 500; }
+.ratio-track { height: 15px; border: 2px solid #191c21; background: #e6e6de; border-radius: 3px; margin-top: 13px; overflow: hidden; }
+.ratio-track > div { height: 100%; }
+.average-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; margin: 23px 0 0; }
+.average-label strong { font-weight: 500; font-size: 20px; }
+.stat-note { color: #7b8175; font-size: 10px; line-height: 1.7; margin-top: 12px; }
+@media (max-width: 540px) { .diary-dialog { height: 100svh; } }
+@media (max-height: 700px) {
+  .period-controls { padding-top: 13px; }
+  .period-navigation { margin-top: 4px; }
+  .record-dialog.sleep .dialog-symbol, .record-dialog.meals .dialog-symbol { width: 60px; height: 60px; margin-bottom: 14px; }
+  .record-dialog.sleep .sleep-options button { min-height: 44px; }
+  .record-dialog.sleep h1, .record-dialog.meals h1 { font-size: 21px; margin-bottom: 24px; }
+  .record-dialog .time-fields { margin-top: 22px; }
+}

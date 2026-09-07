@@ -1,0 +1,14 @@
+{
+  "passed": [
+    "permitted automatic playback on launch",
+    "continuous music across Today, Star Map and Statistics",
+    "pause/play inside data, record and diary dialogs",
+    "manual pause survives page changes and reload",
+    "background suspension and foreground resumption when enabled",
+    "meteors, sparkles, rocket and UFO present; decorative overlay cannot intercept clicks",
+    "daily-star brightness unchanged",
+    "reduced-motion removes decorative animations",
+    "320px, 375px and desktop layout"
+  ],
+  "errors": []
+}

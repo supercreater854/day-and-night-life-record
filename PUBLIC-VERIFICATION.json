@@ -1,0 +1,14 @@
+{
+  "url": "https://day-and-night-life-next.vercel.app/",
+  "verifiedAt": "2026-09-04T09:25:50.769Z",
+  "passed": [
+    "public HTTPS 200 without platform login",
+    "mobile sleep and mood save",
+    "new star-map effects and statistics present",
+    "records survive reload",
+    "375px no horizontal overflow",
+    "deployed HTML, JS, CSS, music, SW and manifest hashes match local release",
+    "offline reload retains records"
+  ],
+  "errors": []
+}
