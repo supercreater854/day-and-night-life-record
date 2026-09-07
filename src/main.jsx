@@ -6,6 +6,7 @@ import './iteration.css';
 import './update.css';
 import './interaction.css';
 import './space.css';
+import './auth.css';
 import { recoverRestore } from './repository';
 
 const root = createRoot(document.getElementById('root'));

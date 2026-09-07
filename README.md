@@ -4,6 +4,16 @@
 
 一个移动端优先的极简生活记录 Web App。用太阳记录吃饭、月亮记录睡眠，再根据心情生成当天的星星，逐步点亮年度星图。
 
+## CloudBase 邮箱登录
+
+- SDK：`@cloudbase/js-sdk` 3.9.2，认证模块延迟加载。
+- 环境：`daynight-d2g3dj5fs4734fda7`，地域：`ap-shanghai`。
+- 正式域名：`https://daynight.zenmehui.fun`。该域名需已加入 CloudBase 身份认证的安全域名配置。
+- 登录入口位于页面左上角。输入邮箱获取 6 位验证码，SDK 调用 `signInWithOtp({ email })`；用户输入验证码后调用本次请求返回的 `verifyOtp({ token })`。
+- SDK 使用 `persistence: 'local'` 保存认证会话；刷新后通过 `getSession()` 恢复，并通过 `onAuthStateChange()` 同步登录、退出和令牌刷新状态。
+- 验证码只保存在当前登录弹层内存中。前端只包含公开的环境 ID 和地域，没有管理员 API Key、Secret 或私钥。
+- 账号仅用于建立认证闭环，没有连接数据库，也没有把现有 localStorage、日记或 IndexedDB 媒体绑定到账号。
+
 ## 打开与运行
 
 - 本地预览：http://127.0.0.1:5174/

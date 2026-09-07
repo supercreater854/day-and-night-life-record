@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Clock from './Clock';
 import StarMap from './StarMap';
 import RecordDialog from './RecordDialog';
@@ -10,6 +10,8 @@ import MusicButton from './MusicButton';
 import { ONBOARDING_KEY, saveRecord } from './repository';
 import { listMediaDates } from './media';
 import { dateKey, makeRecord, readRecords, STORAGE_KEY, suggestedSleep, starPoints } from './model';
+
+const AuthControl = lazy(() => import('./AuthControl'));
 
 export default function App() {
   const [page, setPage] = useState('today');
@@ -107,6 +109,7 @@ export default function App() {
   }
   function refreshRecords() { setRecords(readRecords()); setMediaRevision(value => value + 1); }
   return <div className={`app ${page === 'map' ? 'night' : ''}`}>
+    <Suspense fallback={null}><AuthControl /></Suspense>
     {!modal && !diaryDate && !dataOpen && <div className="global-music"><MusicButton music={music} /></div>}
     {page === 'today' ? <>
       <header className="date"><time dateTime={today}>{now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日</time></header>
