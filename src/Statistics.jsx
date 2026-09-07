@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatDuration, localDate, MOODS, periodFor, starPoints, statistics } from './model';
 import PeriodControls from './PeriodControls';
 import MoodFace from './MoodFace';
@@ -34,9 +34,12 @@ function RecordStrip({ entries, kind, scale, today }) {
   </div>;
 }
 
-export default function Statistics({ records, today }) {
+export default function Statistics({ records, today, isPro = false, onRequestPro }) {
   const [scale, setScale] = useState('week');
   const [anchor, setAnchor] = useState(today);
+  useEffect(() => {
+    if (!isPro && scale !== 'week') { setScale('week'); setAnchor(today); }
+  }, [isPro, scale, today]);
   const period = useMemo(() => periodFor(scale, anchor), [scale, anchor]);
   const stats = useMemo(() => statistics(records, period.days), [records, period]);
   const data = period.days.map(date => records[date]).filter(Boolean);
@@ -53,6 +56,20 @@ export default function Statistics({ records, today }) {
     });
   }, [scale, anchor, period, records]);
   const strip = kind => <RecordStrip entries={entries} kind={kind} scale={scale} today={today} />;
+  if (!isPro) return <main className="statistics-main illustrated-statistics">
+    <PeriodControls scale="week" anchor={scale === 'week' ? anchor : today} onScale={setScale} onAnchor={setAnchor} today={today} lockedScales={['month', 'year']} navigationLocked onLocked={onRequestPro} />
+    <div className="statistics-content free-review">
+      <p className="coverage">记录 <strong data-stat="coverage">{stats.recorded} / {stats.total}</strong> 天</p>
+      <section className="stat-section" aria-labelledby="free-mood-heading"><div className="stat-heading"><h1 id="free-mood-heading">心情</h1></div>{strip('mood')}</section>
+      <section className="stat-section" aria-labelledby="free-sleep-heading"><div className="stat-heading"><h2 id="free-sleep-heading">睡眠</h2></div>{strip('sleep')}</section>
+      <section className="stat-section" aria-labelledby="free-meals-heading"><div className="stat-heading"><h2 id="free-meals-heading">吃饭</h2></div>{strip('meals')}</section>
+      <section className="pro-lock-panel" aria-labelledby="pro-lock-heading">
+        <span aria-hidden="true">★</span><h2 id="pro-lock-heading">完整回顾</h2>
+        <p>30天回顾、月度生活趋势、历史月份与完整统计</p>
+        <button onClick={onRequestPro}>查看 Day &amp; Night Pro</button>
+      </section>
+    </div>
+  </main>;
   return <main className="statistics-main illustrated-statistics">
     <PeriodControls scale={scale} anchor={anchor} onScale={setScale} onAnchor={setAnchor} today={today} />
     <div className="statistics-content">

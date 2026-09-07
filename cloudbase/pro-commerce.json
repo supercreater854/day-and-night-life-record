@@ -1,0 +1,15 @@
+{
+  "environmentId": "daynight-d2g3dj5fs4734fda7",
+  "region": "ap-shanghai",
+  "product": {
+    "id": "day-night-pro-monthly",
+    "name": "Day & Night Pro",
+    "amountCny": 4.9,
+    "durationDays": 30
+  },
+  "tables": ["orders", "entitlements"],
+  "ownerClaim": "request.jwt.claims.sub",
+  "rls": "authenticated users can select only their own rows; orders permit only own fixed-price pending inserts; entitlement writes and order state transitions are only available through restricted functions",
+  "testFunctions": ["simulate_pro_payment(uuid)", "cancel_pro_order(uuid)"],
+  "migration": "migrations/202609070002_pro_orders_entitlements.sql"
+}

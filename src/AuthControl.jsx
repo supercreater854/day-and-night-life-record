@@ -3,7 +3,7 @@ import { cloudbaseAuth, sessionUser, userEmail } from './cloudbase';
 
 const validEmail = value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-export default function AuthControl({ onUserChange }) {
+export default function AuthControl({ onUserChange, isPro = false, proExpiresAt = null }) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,15 +27,15 @@ export default function AuthControl({ onUserChange }) {
 
   const email = userEmail(user);
   return <>
-    <button className={`auth-entry ${user ? 'is-signed-in' : ''}`} onClick={() => setOpen(true)} aria-label={user ? `账号，已登录 ${email}` : '邮箱登录'}>
+    <button className={`auth-entry ${user ? 'is-signed-in' : ''} ${isPro ? 'is-pro' : ''}`} onClick={() => setOpen(true)} aria-label={user ? `账号，已登录 ${email}${isPro ? '，Pro 用户' : ''}` : '邮箱登录'}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2" /><path d="M5.5 19c.6-3.6 2.8-5.4 6.5-5.4s5.9 1.8 6.5 5.4" /></svg>
-      <span>{loading ? '…' : user ? '已登录' : '登录'}</span>
+      <span>{loading ? '…' : isPro ? 'Pro' : user ? '已登录' : '登录'}</span>
     </button>
-    {open && <AuthDialog user={user} onUser={setUser} onClose={() => setOpen(false)} />}
+    {open && <AuthDialog user={user} isPro={isPro} proExpiresAt={proExpiresAt} onUser={setUser} onClose={() => setOpen(false)} />}
   </>;
 }
 
-function AuthDialog({ user, onUser, onClose }) {
+function AuthDialog({ user, isPro, proExpiresAt, onUser, onClose }) {
   const ref = useRef(null);
   const [email, setEmail] = useState('');
   const [sentEmail, setSentEmail] = useState('');
@@ -104,7 +104,7 @@ function AuthDialog({ user, onUser, onClose }) {
         <span className="auth-symbol signed" aria-hidden="true">✓</span>
         <h1 id="auth-title">已登录</h1>
         <p className="auth-email">{currentEmail || 'CloudBase 用户'}</p>
-        <p className="auth-note">每日记录会保留在本机，并同步到你的账号。</p>
+        <p className="auth-note">{isPro ? `Day & Night Pro · 有效至 ${new Date(proExpiresAt).toLocaleDateString('zh-CN')}` : '每日记录会保留在本机，并同步到你的账号。'}</p>
         <button className="auth-secondary" disabled={busy} onClick={signOut}>{busy ? '正在退出…' : '退出登录'}</button>
       </> : <>
         <span className="auth-symbol" aria-hidden="true">@</span>

@@ -1,0 +1,35 @@
+.pro-dialog { border: 0; width: calc(100% - 32px); max-width: 390px; padding: 0; color: #191c21; background: #f7f5ee; border-radius: 8px; }
+.pro-dialog::backdrop { background: rgb(18 25 37 / .44); }
+.pro-close { position: absolute; z-index: 1; top: 14px; right: 14px; width: 44px; height: 44px; border: 0; background: transparent; font-size: 30px; font-weight: 300; }
+.pro-content { min-height: 540px; padding: 55px 28px 34px; display: flex; flex-direction: column; justify-content: center; }
+.pro-mark { display: grid; place-items: center; align-self: center; width: 76px; height: 76px; border: 4px solid #191c21; background: #ffda6e; font-size: 33px; line-height: 1; transform: rotate(-5deg); }
+.pro-mark.checkout { border-radius: 50%; background: #a9d9ed; transform: none; }
+.pro-mark.success { border-radius: 50%; transform: none; }
+.pro-content h1 { margin: 23px 0 25px; font-size: 24px; }
+.pro-content ul { width: max-content; max-width: 100%; margin: 0 auto; padding: 0; list-style: none; font-size: 15px; line-height: 2.05; }
+.pro-price { margin-top: 22px; text-align: center; font-size: 24px; font-weight: 650; }
+.pro-account { margin-top: 7px; color: #6e736c; text-align: center; overflow-wrap: anywhere; }
+.pro-primary, .pro-secondary { min-height: 50px; border: 2px solid #191c21; border-radius: 7px; font-weight: 650; }
+.pro-primary { margin-top: 22px; background: #ffda6e; }
+.pro-secondary { margin-top: 10px; background: transparent; }
+.pro-primary:disabled, .pro-secondary:disabled { opacity: .45; }
+.pro-content dl { margin: 0; border-top: 2px solid #191c21; border-bottom: 2px solid #191c21; }
+.pro-content dl div { display: flex; justify-content: space-between; padding: 14px 3px; }
+.pro-content dl div + div { border-top: 1px solid #c9c8c0; }
+.pro-content dt { color: #686d66; }
+.pro-content dd { margin: 0; font-weight: 650; }
+.test-payment-note { margin: 20px 0 0; padding: 12px; border: 2px solid #191c21; background: #fff2bf; text-align: center; font-size: 13px; line-height: 1.55; }
+.pro-success-copy { margin: 0; text-align: center; line-height: 1.8; }
+.pro-error { margin: 14px 0 0; color: #9b3831; text-align: center; font-size: 12px; line-height: 1.6; }
+.pro-lock-panel { margin: 25px 0 5px; padding: 22px 18px; border: 3px solid #191c21; border-radius: 8px; background: #fff8df; text-align: center; }
+.pro-lock-panel span { display: block; font-size: 24px; }
+.pro-lock-panel h2 { margin: 7px 0 0; font-size: 17px; }
+.pro-lock-panel p { margin: 7px 0 15px; color: #686d66; font-size: 12px; line-height: 1.6; }
+.pro-lock-panel button { min-height: 43px; padding: 0 18px; border: 2px solid #191c21; border-radius: 7px; background: #ffda6e; font-weight: 650; }
+.scale-options button.is-locked span { margin-left: 3px; font-size: 9px; }
+.auth-entry.is-pro { color: #9a6b11; }
+.night .auth-entry.is-pro { color: #ffda6e; }
+@media (max-width: 540px) {
+  .pro-dialog { width: 100%; max-width: none; height: 100vh; height: 100svh; max-height: 100vh; max-height: 100svh; border-radius: 0; }
+  .pro-content { min-height: 100%; max-width: 390px; margin: auto; padding-top: 70px; padding-top: max(70px, env(safe-area-inset-top)); }
+}

@@ -12,8 +12,10 @@ import { listMediaDates } from './media';
 import { dateKey, makeRecord, suggestedSleep, starPoints } from './model';
 import { cloudbaseDb, userEmail, userId } from './cloudbase';
 import { loadCloudRecords, syncCloudRecord } from './cloudRecords';
+import { isEntitlementActive, loadEntitlement } from './pro';
 
 const AuthControl = lazy(() => import('./AuthControl'));
+const ProDialog = lazy(() => import('./ProDialog'));
 
 export default function App() {
   const [page, setPage] = useState('today');
@@ -25,6 +27,10 @@ export default function App() {
   const [cloudUser, setCloudUser] = useState(null);
   const cloudUid = userId(cloudUser);
   const cloudEmail = userEmail(cloudUser);
+  const [entitlementState, setEntitlementState] = useState({ ownerUid: '', status: 'idle', value: null });
+  const [proOpen, setProOpen] = useState(false);
+  const entitlementGeneration = useRef(0);
+  const isPro = !!cloudUid && entitlementState.ownerUid === cloudUid && isEntitlementActive(entitlementState.value);
   const activeRecordsKey = recordsStorageKey(cloudUid);
   const [syncError, setSyncError] = useState('');
   const [error, setError] = useState(initial.error);
@@ -83,6 +89,19 @@ export default function App() {
     window.addEventListener('storage', sync);
     return () => window.removeEventListener('storage', sync);
   }, [activeRecordsKey, cloudUid]);
+  useEffect(() => {
+    const generation = ++entitlementGeneration.current;
+    let active = true;
+    setProOpen(false);
+    setEntitlementState({ ownerUid: cloudUid, status: cloudUid ? 'loading' : 'idle', value: null });
+    if (!cloudUid) return () => { active = false; };
+    loadEntitlement(cloudbaseDb, cloudUid).then(value => {
+      if (active && generation === entitlementGeneration.current) setEntitlementState({ ownerUid: cloudUid, status: 'ready', value });
+    }).catch(() => {
+      if (active && generation === entitlementGeneration.current) setEntitlementState({ ownerUid: cloudUid, status: 'error', value: null });
+    });
+    return () => { active = false; };
+  }, [cloudUid]);
   useEffect(() => {
     const generation = ++syncGeneration.current;
     let active = true;
@@ -193,15 +212,16 @@ export default function App() {
   }
   function refreshRecords() { setLocalOwnerKey(activeRecordsKey); setLocalRecords(readLocalRecords(cloudUid)); setMediaRevision(value => value + 1); }
   return <div className={`app ${page === 'map' ? 'night' : ''}`}>
-    <Suspense fallback={null}><AuthControl onUserChange={setCloudUser} /></Suspense>
+    <Suspense fallback={null}><AuthControl onUserChange={setCloudUser} isPro={isPro} proExpiresAt={entitlementState.value?.expires_at} /></Suspense>
     {!modal && !diaryDate && !dataOpen && <div className="global-music"><MusicButton music={music} /></div>}
     {page === 'today' ? <>
       <header className="date"><time dateTime={today}>{now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日</time></header>
       <main className={`today-main ${pulse ? `saved-${pulse}` : ''}`}><Clock now={now} record={records[today]} intro={intro} onSleep={() => open('sleep')} onMeals={() => open('meals')} /></main>
-    </> : page === 'map' ? <StarMap key={mapFocus} focusToday={mapFocus > 0} records={mapRecords.current} today={today} onDay={setDiaryDate} returned={returned} effectsPaused={!!diaryDate || !!modal} /> : <><Statistics records={allRecords} today={today} /><button className="data-entry" onClick={() => setDataOpen(true)}>数据与使用 <span aria-hidden="true">↗</span></button></>}
+    </> : page === 'map' ? <StarMap key={mapFocus} focusToday={mapFocus > 0} records={mapRecords.current} today={today} onDay={setDiaryDate} returned={returned} effectsPaused={!!diaryDate || !!modal} /> : <><Statistics key={`${cloudUid || 'guest'}-${isPro ? 'pro' : 'free'}`} records={allRecords} today={today} isPro={isPro} onRequestPro={() => setProOpen(true)} /><button className="data-entry" onClick={() => setDataOpen(true)}>数据与使用 <span aria-hidden="true">↗</span></button></>}
     {notice && !modal && page === 'today' && <div className={`save-notice ${notice.star ? 'star-arrival' : ''}`} role="status" key={notice.id}>{notice.star && <svg className="saved-star" viewBox="-40 -40 80 80" aria-hidden="true"><polygon points={starPoints(0, 0, 18 * notice.record.starSize)} fill="#ffe4a0" opacity={notice.record.starBrightness} /></svg>}<span>{notice.text}</span>{notice.star && <button onClick={() => { setMapFocus(value => value + 1); setPage('map'); setNotice(null); }}>看看今天的星 <span aria-hidden="true">↗</span></button>}</div>}
     {error && !modal && <p className="page-error" role="alert">{error}</p>}
     {syncError && !modal && <p className="page-error" role="alert">{syncError}</p>}
+    {page === 'statistics' && entitlementState.status === 'error' && <p className="page-error" role="alert">Pro 状态暂时无法读取，请稍后刷新。</p>}
     {mediaReadError && <p className="page-error" role="alert">{mediaReadError}</p>}
     {legacyCandidate && cloudUid && <aside className="legacy-import" role="dialog" aria-labelledby="legacy-import-title" aria-describedby="legacy-import-note">
       <h2 id="legacy-import-title">发现本机旧记录</h2>
@@ -223,5 +243,8 @@ export default function App() {
     {diaryDate && <DiaryDialog music={music} key={diaryDate} date={diaryDate} record={allRecords[diaryDate]} savedRevision={diarySaved} onClose={() => { setReturned({ date: diaryDate, id: Date.now() }); setDiaryDate(null); }} onEdit={type => open(type, diaryDate, true)} onSaveText={diaryText => writeRecord(diaryDate, { diaryText })} onMediaChanged={() => setMediaRevision(value => value + 1)} />}
     {modal && <RecordDialog music={music} key={`${modal.type}-${modal.date}`} type={modal.type} suggestion={suggestedSleep(records, modal.date)} record={records[modal.date]} onSave={save} onClose={closeRecord} error={error} />}
     {dataOpen && <DataDialog music={music} recordOwner={cloudUid || null} onClose={() => setDataOpen(false)} onRestored={refreshRecords} />}
+    {proOpen && <Suspense fallback={null}><ProDialog key={cloudUid || 'guest'} uid={cloudUid} email={cloudEmail} onClose={() => setProOpen(false)} onEntitlement={value => {
+      if (value?.owner_id === cloudUid) setEntitlementState({ ownerUid: cloudUid, status: 'ready', value });
+    }} /></Suspense>}
   </div>;
 }
