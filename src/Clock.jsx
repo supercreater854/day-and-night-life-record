@@ -1,4 +1,4 @@
-import { clockHands, clockPoint, sleepArc, sleepMinutes, starPoints, timeMinutes } from './model';
+import { calculateDayScore, clockHands, clockPoint, deriveStarAppearance, sleepArc, sleepMinutes, starPoints, timeMinutes } from './model';
 import { touchFeedback } from './motion';
 import { recordExperience } from './experience';
 
@@ -6,16 +6,18 @@ export function Moon({ ...props }) {
   return <path d="M 25,-48 C -9,-51 -42,-27 -42,8 C -42,43 -9,62 21,47 C 42,37 53,17 49,-4 C 27,15 0,5 -7,-15 C -12,-29 0,-44 25,-48 Z" {...props} />;
 }
 
-export default function Clock({ onSleep, onMeals, now = new Date(), record, intro = false }) {
+export default function Clock({ onSleep, onMeals, onMood, onDiary, now = new Date(), record, intro = false }) {
   const arc = sleepArc(record?.sleepStart, record?.sleepEnd);
   const experience = recordExperience(record);
   const hands = clockHands(now);
+  const day = calculateDayScore(record);
+  const appearance = deriveStarAppearance(day.dayScore, day.completeness);
   const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map(value => String(value).padStart(2, '0')).join(':');
   const activate = action => event => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); action(); }
   };
-  const status = `${experience.mealRecorded ? '吃饭已记录' : '吃饭未记录'}，${experience.sleepRecorded ? '睡眠已记录' : '睡眠未记录'}${experience.starReady ? '，今日星星已生成' : ''}`;
-  return <svg className="clock" viewBox="0 0 480 480" aria-label={`12 小时时钟，当前时间 ${time}，${status}，点击月亮记录睡眠，点击太阳记录吃饭`}>
+  const status = `${experience.mealRecorded ? '吃饭已记录' : '吃饭未记录'}，${experience.sleepRecorded ? '睡眠已记录' : '睡眠未记录'}，${record?.mood ? '心情已记录' : '心情未记录'}`;
+  return <svg className="clock" viewBox="0 0 480 480" aria-label={`12 小时时钟，当前时间 ${time}，${status}`}>
     <defs><clipPath id="clock-face"><circle cx="240" cy="240" r="184" /></clipPath></defs>
     <g className="clock-dial" transform="rotate(180 240 240)">
     <circle cx="240" cy="240" r="231" fill="#f7f5ee" stroke="#191c21" strokeWidth="8" />
@@ -85,10 +87,18 @@ export default function Clock({ onSleep, onMeals, now = new Date(), record, intr
       </g>
       <circle cx="240" cy="240" r="9" fill="#191c21" /><circle cx="240" cy="240" r="3.5" fill="#c75942" />
     </g>
-    {(experience.starWaiting || experience.starReady) && <g className={`today-star-anchor ${experience.starReady ? 'is-ready' : 'is-waiting'}`} pointerEvents="none" aria-hidden="true">
-      <polygon className="today-star-shape" points={starPoints(240, 240, experience.starReady ? 16 * record.starSize : 14)} fill={experience.starReady ? '#ffe4a0' : '#f7f5ee'} opacity={experience.starReady ? record.starBrightness : .55} stroke={experience.starReady ? '#191c21' : '#777d78'} strokeWidth="2.2" strokeLinejoin="round" />
-      {experience.starReady && <circle cx="240" cy="240" r="2.4" fill="#c75942" opacity={Math.max(.55, record.starBrightness)} />}
-    </g>}
-    {intro && <g className="clock-intro" pointerEvents="none" textAnchor="middle"><g><rect x="172" y="204" width="96" height="27" rx="13" fill="#fffdf5" stroke="#191c21" strokeWidth="2" /><text x="220" y="223" fill="#191c21">点太阳 · 吃饭</text></g><g><rect x="211" y="389" width="102" height="27" rx="13" fill="#ffdc71" stroke="#191c21" strokeWidth="2" /><text x="262" y="408" fill="#191c21">点月亮 · 睡眠</text></g></g>}
+    <g className={`today-star-anchor mood-entry ${appearance.complete ? 'is-ready' : 'is-waiting'}`} role="button" tabIndex="0" aria-label={record?.mood ? '心情已记录，点击修改' : '记录今天的心情'} onClick={onMood} onKeyDown={activate(onMood)}>
+      <circle className="hit-area" cx="240" cy="240" r="32" />
+      {appearance.halo > 0 && <circle className="today-star-halo" cx="240" cy="240" r={22 * appearance.size} fill="none" stroke={appearance.color} strokeWidth="3" opacity={appearance.halo} />}
+      <polygon className="today-star-shape" points={starPoints(240, 240, appearance.complete ? 15 * appearance.size : 14)} fill={appearance.color} opacity={appearance.brightness} stroke={appearance.complete ? appearance.stroke : '#6f7780'} strokeWidth="2.4" strokeLinejoin="round" />
+      {!appearance.complete && Array.from({ length: day.completeness }, (_, index) => <circle key={index} cx={231 + index * 18} cy="266" r="2.8" fill="#191c21" />)}
+    </g>
+    <g className={`diary-corner-entry ${record?.diaryText?.trim() ? 'has-text' : ''}`} role="button" tabIndex="0" aria-label={record?.diaryText?.trim() ? '简记已保存，点击修改' : '写一条简记'} onClick={onDiary} onKeyDown={activate(onDiary)}>
+      <path d="M377 250h39v45h-39z" fill="#fffdf5" stroke="#191c21" strokeWidth="3" />
+      <path d="M401 250v15h15" fill="#ffdc71" stroke="#191c21" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M386 276h20M386 284h14" stroke="#191c21" strokeWidth="2" strokeLinecap="round" />
+      {record?.diaryText?.trim() && <path d="m387 266 4 4 8-9" fill="none" stroke="#c75942" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+    </g>
+    {intro && <g className="clock-intro" pointerEvents="none" textAnchor="middle"><g><rect x="165" y="191" width="110" height="25" rx="12" fill="#fffdf5" stroke="#191c21" strokeWidth="2" /><text x="220" y="208" fill="#191c21">点太阳 · 吃饭</text></g><g><rect x="204" y="390" width="116" height="25" rx="12" fill="#ffdc71" stroke="#191c21" strokeWidth="2" /><text x="262" y="407" fill="#191c21">点月亮 · 睡眠</text></g><g><rect x="187" y="262" width="106" height="23" rx="11" fill="#fffdf5" stroke="#191c21" strokeWidth="2" /><text x="240" y="278" fill="#191c21">点星星 · 心情</text></g></g>}
   </svg>;
 }

@@ -6,9 +6,8 @@ export const SLEEP = [
 export const MEALS = [{ label: '0', score: 0 }, { label: '1', score: 1 }, { label: '2', score: 2 }, { label: '3+', score: 3 }];
 export const TIMING = [{ label: '很乱', score: 0 }, { label: '一般', score: 1 }, { label: '基本按时', score: 2 }];
 export const MOODS = ['很差', '较差', '一般', '不错', '很好'];
-export const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => minutesToTime(i * 30));
+export const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => minutesToTime(i * 15));
 export const DEFAULT_MEAL_TIMES = [[], ['12:30'], ['08:00', '18:30'], ['08:00', '12:30', '18:30']];
-const BRIGHTNESS = [0.15, 0.35, 0.6, 0.82, 1];
 
 export function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -21,7 +20,7 @@ export function minutesToTime(minutes) {
   return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
 }
 export function timeMinutes(time) {
-  if (typeof time !== 'string' || !/^([01]\d|2[0-3]):(00|30)$/.test(time)) return null;
+  if (typeof time !== 'string' || !/^([01]\d|2[0-3]):(00|15|30|45)$/.test(time)) return null;
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
@@ -59,24 +58,60 @@ export function formatDuration(minutes) {
   return `${Math.floor(rounded / 60)}h ${rounded % 60}m`;
 }
 
+export function deriveMealTiming(mealCount, mealTimes) {
+  if (!Number.isInteger(mealCount) || mealCount < 0) return null;
+  if (mealCount === 0) return 0;
+  const minutes = (Array.isArray(mealTimes) ? mealTimes : []).map(timeMinutes);
+  if (minutes.length < mealCount || minutes.slice(0, mealCount).some(value => value === null)) return null;
+  const ordered = minutes.slice(0, mealCount).sort((a, b) => a - b);
+  const windows = new Set(ordered.map(value => value >= 300 && value < 660 ? 'morning' : value >= 660 && value < 960 ? 'noon' : value >= 960 && value < 1380 ? 'evening' : null).filter(Boolean));
+  const coverage = windows.size / Math.min(mealCount, 3);
+  const gaps = ordered.slice(1).map((value, index) => value - ordered[index]);
+  const intervalRatio = gaps.length ? gaps.filter(gap => gap >= 180 && gap <= 420).length / gaps.length : 1;
+  const rhythm = (coverage + intervalRatio) / 2;
+  return rhythm >= .75 ? 2 : rhythm >= .4 ? 1 : 0;
+}
+
+export function calculateDayScore(record = {}) {
+  const present = [record.sleepScore, record.mealScore, record.mood].map(value => value != null);
+  const completeness = present.filter(Boolean).length;
+  const sleepIndex = present[0] ? record.sleepScore * 20 : null;
+  const mealIndex = present[1] ? record.mealScore * 20 : null;
+  const moodIndex = present[2] ? (record.mood - 1) * 25 : null;
+  const dayScore = completeness === 3 ? Math.round(sleepIndex * .3 + mealIndex * .3 + moodIndex * .4) : null;
+  return { completeness, sleepIndex, mealIndex, moodIndex, dayScore };
+}
+
+export function deriveStarAppearance(dayScore, completeness = dayScore == null ? 0 : 3, scale = 1) {
+  if (completeness < 3 || dayScore == null) return { complete: false, size: .62 * scale, brightness: completeness ? .3 : .12, color: 'transparent', stroke: '#b9c9e1', halo: 0, twinkle: 0, markers: completeness };
+  const tier = dayScore < 20 ? [.55, .28, '#52657c', 0, 8] : dayScore < 40 ? [.75, .42, '#8297ad', .18, 7] : dayScore < 60 ? [1, .62, '#f0ead8', .28, 6] : dayScore < 80 ? [1.3, .82, '#ffe7a0', .46, 5] : [1.65, 1, '#ffd45c', .68, 4];
+  return { complete: true, size: tier[0] * scale, brightness: tier[1], color: tier[2], stroke: tier[2], halo: tier[3], twinkle: tier[4], markers: 3 };
+}
+
 export function makeRecord(date, previous = {}, patch = {}) {
-  const record = { date, sleepScore: null, mealScore: null, mood: null, starSize: null, starBrightness: null, sleepStart: null, sleepEnd: null, mealCount: null, mealTiming: null, mealTimes: [], diaryText: '', extensions: {}, ...previous, ...patch, schemaVersion: 3, starRuleVersion: 1 };
+  const record = { date, sleepScore: null, mealScore: null, mood: null, starSize: null, starBrightness: null, sleepStart: null, sleepEnd: null, mealCount: null, mealTiming: null, mealTimes: [], diaryText: '', extensions: {}, ...previous, ...patch, schemaVersion: 3, starRuleVersion: 2 };
   const duration = sleepMinutes(record.sleepStart, record.sleepEnd);
   record.mealCountAtLeast = Object.hasOwn(patch, 'mealCount') ? false : previous.mealCountAtLeast ?? (previous.mealCount === 3 && (previous.schemaVersion ?? 1) < 3);
   if (duration !== null) record.sleepScore = sleepScoreFor(duration);
-  if (Number.isInteger(record.mealCount) && record.mealCount >= 0 && [0, 1, 2].includes(record.mealTiming)) record.mealScore = Math.min(record.mealCount, 3) + record.mealTiming;
   record.mealTimes = Array.isArray(record.mealTimes) ? record.mealTimes.filter(t => timeMinutes(t) !== null).slice(0, record.mealCount ?? 3) : [];
+  const automaticTiming = deriveMealTiming(record.mealCount, record.mealTimes);
+  if (automaticTiming !== null) {
+    record.mealTiming = automaticTiming;
+    record.mealScore = Math.min(record.mealCount, 3) + automaticTiming;
+  } else if (Number.isInteger(record.mealCount) && record.mealCount >= 0 && [0, 1, 2].includes(record.mealTiming) && record.mealScore == null) {
+    record.mealScore = Math.min(record.mealCount, 3) + record.mealTiming;
+  }
   record.diaryText = typeof record.diaryText === 'string' ? record.diaryText : '';
   return { ...record, ...generateStar(record) };
 }
 
 // Extensions describe the day; only these three core values affect the star.
 export function generateStar({ sleepScore, mealScore, mood }) {
-  const hasActivity = sleepScore != null || mealScore != null;
-  const score = (sleepScore ?? 0) + (mealScore ?? 0);
+  const score = calculateDayScore({ sleepScore, mealScore, mood });
+  const appearance = deriveStarAppearance(score.dayScore, score.completeness);
   return {
-    starSize: hasActivity ? score <= 1 ? .45 : score <= 3 ? .65 : score <= 6 ? 1 : score <= 8 ? 1.35 : 1.7 : null,
-    starBrightness: mood == null ? null : BRIGHTNESS[mood - 1],
+    starSize: appearance.complete ? appearance.size : null,
+    starBrightness: appearance.complete ? appearance.brightness : null,
   };
 }
 

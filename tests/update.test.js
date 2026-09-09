@@ -6,7 +6,7 @@ import { validateBackup } from '../src/backup.js';
 const date = '2026-09-04';
 test('extra meals store actual counts but never inflate stars beyond existing rules', () => {
   const r = makeRecord(date, {}, { mealCount: 5, mealTiming: 2, mealTimes: ['07:00', '10:30', '12:30', '18:00', '21:00'], sleepScore: 5, mood: 5, extensions: { reading: { completed: true } } });
-  assert.equal(r.mealScore, 5); assert.equal(r.starSize, 1.7); assert.equal(r.mealTimes.length, 5);
+  assert.equal(r.mealScore, 5); assert.equal(r.starSize, 1.65); assert.equal(r.mealTimes.length, 5);
   assert.equal(statistics({ [date]: r }, [date]).averageMeals, 5);
   assert.deepEqual(makeRecord(date, r, { diaryText: 'hello' }).extensions, r.extensions);
 });
@@ -22,7 +22,7 @@ test('legacy 3+ keeps its meaning until the user confirms an actual count', () =
 });
 test('backup validates all content before import and rejects damaged dates, future schema, and media', () => {
   const record = makeRecord(date, {}, { mood: 2, sleepScore: 1 });
-  assert.equal(validateBackup({ [date]: record }).records[date].starBrightness, .35);
+  assert.equal(validateBackup({ [date]: record }).records[date].starBrightness, null);
   assert.throws(() => validateBackup({ '2026-02-31': { ...record, date: '2026-02-31' } }));
   assert.throws(() => validateBackup({ [date]: { ...record, schemaVersion: 100 } }));
   assert.throws(() => validateBackup({ [date]: { ...record, sleepStart: 'oops' } }));

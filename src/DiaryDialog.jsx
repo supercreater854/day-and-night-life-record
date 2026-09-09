@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { formatDuration, fullDate, hasData, MOODS, SLEEP, sleepMinutes, starPoints, TIMING } from './model';
+import { calculateDayScore, deriveStarAppearance, formatDuration, fullDate, hasData, MOODS, SLEEP, sleepMinutes, starPoints } from './model';
 import { addMedia, deleteMedia, listMedia } from './media';
 import { readDraft, writeDraft } from './repository';
 import MoodFace from './MoodFace';
@@ -24,7 +24,9 @@ export default function DiaryDialog({ date, record, onClose, onEdit, onSaveText,
     return () => clearTimeout(timer);
   }, [textStatus, editing]);
   const duration = sleepMinutes(record?.sleepStart, record?.sleepEnd);
-  const lit = record?.starSize != null && record?.starBrightness != null;
+  const dayScore = calculateDayScore(record);
+  const star = deriveStarAppearance(dayScore.dayScore, dayScore.completeness);
+  const lit = star.complete;
   async function saveText(value) {
     const ok = onSaveText(value);
     if (ok) { setText(value); try { writeDraft(date, null); setTextStatus('已保存'); setEditing(false); ref.current.scrollTop = 0; } catch { setTextStatus('文字已保存，旧草稿清理失败，请重试保存。'); } }
@@ -36,19 +38,19 @@ export default function DiaryDialog({ date, record, onClose, onEdit, onSaveText,
     <div className="diary-content">
       <time className="diary-date" dateTime={date}>{fullDate(date)}</time>
       <svg className="diary-star" viewBox="0 0 180 150" aria-label="今日星星">
-        <polygon points={starPoints(90, 75, lit ? 30 * record.starSize : 20)} fill={lit ? '#ffe4a0' : 'none'} stroke={lit ? '#ffe4a0' : '#b9c9e1'} strokeWidth="1.5" opacity={lit ? record.starBrightness : .3} strokeLinejoin="round" />
+        <polygon points={starPoints(90, 75, lit ? 30 * star.size : 20)} fill={star.color} stroke={star.stroke} strokeWidth="1.5" opacity={star.brightness} strokeLinejoin="round" />
       </svg>
       {!lit && editing && <p className="time-summary star-explanation">{record?.mood == null ? '记下心情，再添一笔吃饭或睡眠，这颗星就有了模样。' : '再记一笔吃饭或睡眠，让这颗星有了模样。'}</p>}
       {!editing && <div className="diary-overview">
         <div className="reading-mood">{record?.mood ? <><MoodFace value={record.mood} /><span>{MOODS[record.mood - 1]}</span></> : <span>心情未记录</span>}</div>
         <dl className="reading-facts"><div><dt>睡眠</dt><dd>{duration !== null ? `${Math.floor(duration / 60)}小时${duration % 60 ? `${duration % 60}分` : ''}` : record?.sleepScore != null ? SLEEP.find(s => s.score === record.sleepScore)?.label : '未记录'}</dd></div>
-          <div><dt>吃饭</dt><dd>{record?.mealScore != null ? `${record.mealCount == null ? '已记录' : `${record.mealCountAtLeast ? '3+' : record.mealCount}顿`}${record.mealTiming != null ? ` · ${TIMING[record.mealTiming]?.label}` : ''}` : '未记录'}</dd></div></dl>
+          <div><dt>吃饭</dt><dd>{record?.mealScore != null ? `${record.mealCount == null ? '已记录' : `${record.mealCountAtLeast ? '3+' : record.mealCount}顿`} · ${record.mealScore}/5` : '未记录'}</dd></div></dl>
         {record?.diaryText?.trim() && <p className="reading-text">{record.diaryText}</p>}
       </div>}
       {editing && <><div className="daily-details">
         <button onClick={() => onEdit('mood')} aria-label="修改心情"><span>心情</span><strong>{record?.mood ? <span className="diary-mood"><MoodFace value={record.mood} />{MOODS[record.mood - 1]}</span> : '未记录'}</strong><span aria-hidden="true">›</span></button>
         <button onClick={() => onEdit('sleep')} aria-label="修改睡眠"><span>睡眠</span><strong>{duration !== null ? <>{record.sleepStart} → {record.sleepEnd}<small>{formatDuration(duration)}</small></> : record?.sleepScore != null ? `${SLEEP.find(s => s.score === record.sleepScore)?.label} · 待补时间` : '未记录'}</strong><span aria-hidden="true">›</span></button>
-        <button onClick={() => onEdit('meals')} aria-label="修改吃饭"><span>吃饭</span><strong>{record?.mealScore != null ? <>{record.mealCount == null ? '已记录 · 待补时间' : `${record.mealCountAtLeast ? '3+' : record.mealCount} 顿 · ${TIMING[record.mealTiming]?.label ?? ''}`}<small>{record.mealTimes?.join(' / ')}</small></> : '未记录'}</strong><span aria-hidden="true">›</span></button>
+        <button onClick={() => onEdit('meals')} aria-label="修改吃饭"><span>吃饭</span><strong>{record?.mealScore != null ? <>{record.mealCount == null ? '已记录 · 待补时间' : `${record.mealCountAtLeast ? '3+' : record.mealCount} 顿 · ${record.mealScore}/5`}<small>{record.mealTimes?.join(' / ')}</small></> : '未记录'}</strong><span aria-hidden="true">›</span></button>
       </div>
       <section className="diary-writing">
         <label htmlFor="diary-text">文字</label>

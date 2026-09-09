@@ -1,34 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { annualPositions, dateKey, makeRecord, readRecords, SLEEP, STORAGE_KEY } from '../src/model.js';
+import { annualPositions, calculateDayScore, dateKey, deriveMealTiming, deriveStarAppearance, makeRecord, readRecords, SLEEP, STORAGE_KEY } from '../src/model.js';
 
-test('all total-score boundaries produce the specified star sizes', () => {
-  const expected = [.45, .45, .65, .65, 1, 1, 1, 1.35, 1.35, 1.7, 1.7];
-  for (let score = 0; score <= 10; score++) {
-    const r = makeRecord('2026-09-04', {}, { sleepScore: Math.min(score, 5), mealScore: Math.max(0, score - 5), mood: 3 });
-    assert.equal(r.starSize, expected[score]);
-    assert.equal(r.starBrightness, .6);
+test('weighted day score and all visual tier boundaries are exact', () => {
+  assert.equal(calculateDayScore({ sleepScore: 5, mealScore: 5, mood: 5 }).dayScore, 100);
+  assert.equal(calculateDayScore({ sleepScore: 3, mealScore: 3, mood: 3 }).dayScore, 56);
+  assert.equal(calculateDayScore({ sleepScore: 0, mealScore: 0, mood: 1 }).dayScore, 0);
+  for (const [score, size, brightness] of [[0,.55,.28],[19,.55,.28],[20,.75,.42],[39,.75,.42],[40,1,.62],[59,1,.62],[60,1.3,.82],[79,1.3,.82],[80,1.65,1],[100,1.65,1]]) {
+    const appearance = deriveStarAppearance(score, 3);
+    assert.equal(appearance.size, size); assert.equal(appearance.brightness, brightness);
   }
 });
-test('brightness depends only on mood', () => {
-  for (let mood = 1; mood <= 5; mood++) {
-    for (const sleepScore of [0, 5]) {
-      const r = makeRecord('2026-09-04', {}, { sleepScore, mealScore: 5, mood });
-      assert.equal(r.starBrightness, [.15, .35, .6, .82, 1][mood - 1]);
-    }
-  }
+test('meal rhythm derives windows and three-to-seven-hour gaps', () => {
+  assert.equal(deriveMealTiming(0, []), 0);
+  assert.equal(deriveMealTiming(1, ['12:15']), 2);
+  assert.equal(deriveMealTiming(3, ['08:00', '12:30', '18:30']), 2);
+  assert.equal(deriveMealTiming(3, ['01:00', '02:00', '03:00']), 0);
+  assert.equal(deriveMealTiming(4, ['08:00', '12:00', '18:00', '21:00']), 2);
+  assert.equal(deriveMealTiming(2, ['08:00']), null);
 });
 test('unrecorded, partial, and explicitly zero-score days stay distinct', () => {
   const empty = makeRecord('2026-09-04');
   assert.equal(empty.starSize, null);
   assert.equal(empty.starBrightness, null);
   const zero = makeRecord(empty.date, empty, { sleepScore: 0 });
-  assert.equal(zero.starSize, .45);
+  assert.equal(zero.starSize, null);
   assert.equal(zero.mealScore, null);
   assert.equal(zero.starBrightness, null);
   const complete = makeRecord(empty.date, zero, { mood: 1, mealScore: 0 });
-  assert.equal(complete.starSize, .45);
-  assert.equal(complete.starBrightness, .15);
+  assert.equal(complete.starSize, .55);
+  assert.equal(complete.starBrightness, .28);
+  assert.equal(calculateDayScore(zero).completeness, 1);
 });
 test('sleep labels and scores match the specification', () => {
   assert.deepEqual(SLEEP.map(o => o.score), [0, 1, 3, 5, 4]);
@@ -52,6 +54,7 @@ test('annual map has unique, deterministic positions and handles leap years', ()
 });
 test('storage reload preserves records and recalculates derived fields', () => {
   const record = makeRecord('2026-09-04', {}, { sleepScore: 5, mealScore: 5, mood: 5 });
+  assert.equal(record.starRuleVersion, 2);
   const storage = { getItem: key => key === STORAGE_KEY ? JSON.stringify({ [record.date]: record }) : null };
   assert.deepEqual(readRecords(storage)[record.date], record);
   assert.equal(dateKey(new Date(2026, 8, 4, 23, 59)), '2026-09-04');
