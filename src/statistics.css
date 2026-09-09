@@ -3,6 +3,7 @@
 .illustrated-statistics .period-controls { max-width: 480px; }
 .illustrated-statistics .coverage { margin: 9px 0 29px; font-size: 12px; }
 .illustrated-statistics .coverage strong { font-size: 13px; }
+.illustrated-statistics .coverage.is-early { color: #676c65; }
 .illustrated-statistics .stat-section { padding-bottom: 25px; margin-bottom: 25px; border-bottom: 1px solid #a3a49a; }
 .illustrated-statistics .stat-heading { margin-bottom: 18px; }
 .illustrated-statistics .stat-heading > * + * { margin-left: 10px; }

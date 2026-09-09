@@ -59,7 +59,7 @@ export default function Statistics({ records, today, isPro = false, onRequestPro
   if (!isPro) return <main className="statistics-main illustrated-statistics">
     <PeriodControls scale="week" anchor={scale === 'week' ? anchor : today} onScale={setScale} onAnchor={setAnchor} today={today} lockedScales={['month', 'year']} navigationLocked onLocked={onRequestPro} />
     <div className="statistics-content free-review">
-      <p className="coverage">记录 <strong data-stat="coverage">{stats.recorded} / {stats.total}</strong> 天</p>
+      <p className={`coverage ${stats.recorded < 3 ? 'is-early' : ''}`}>{stats.recorded === 0 ? '还没有本周记录' : stats.recorded < 3 ? <>本周已有 <strong data-stat="coverage">{stats.recorded}</strong> 天记录</> : <>记录 <strong data-stat="coverage">{stats.recorded} / {stats.total}</strong> 天</>}</p>
       <section className="stat-section" aria-labelledby="free-mood-heading"><div className="stat-heading"><h1 id="free-mood-heading">心情</h1></div>{strip('mood')}</section>
       <section className="stat-section" aria-labelledby="free-sleep-heading"><div className="stat-heading"><h2 id="free-sleep-heading">睡眠</h2></div>{strip('sleep')}</section>
       <section className="stat-section" aria-labelledby="free-meals-heading"><div className="stat-heading"><h2 id="free-meals-heading">吃饭</h2></div>{strip('meals')}</section>

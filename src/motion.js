@@ -1,12 +1,17 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export function useReducedMotion() {
-  const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [reduced, setReduced] = useState(() => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
   useEffect(() => {
+    if (!window.matchMedia) return undefined;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReduced(query.matches);
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
+    if (query.addEventListener) {
+      query.addEventListener('change', update);
+      return () => query.removeEventListener('change', update);
+    }
+    query.addListener(update);
+    return () => query.removeListener(update);
   }, []);
   return reduced;
 }
@@ -34,9 +39,10 @@ export function useMapCamera(target) {
 }
 
 export function touchFeedback(event, type) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const node = event.currentTarget;
-  node.getAnimations().forEach(animation => animation.cancel());
+  if (!node.animate) return;
+  node.getAnimations?.().forEach(animation => animation.cancel());
   node.animate(type === 'moon' ? [{ transform: 'scale(.95) rotate(-5deg)' }, { transform: 'scale(1.02) rotate(3deg)' }, { transform: 'scale(1) rotate(0)' }]
     : [{ transform: 'scale(.94) rotate(-3deg)' }, { transform: 'scale(1.04) rotate(3deg)' }, { transform: 'scale(1) rotate(0)' }], { duration: 240, easing: 'ease-out' });
 }

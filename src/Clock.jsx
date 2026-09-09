@@ -1,5 +1,6 @@
 import { clockHands, clockPoint, sleepArc, sleepMinutes, starPoints, timeMinutes } from './model';
 import { touchFeedback } from './motion';
+import { recordExperience } from './experience';
 
 export function Moon({ ...props }) {
   return <path d="M 25,-48 C -9,-51 -42,-27 -42,8 C -42,43 -9,62 21,47 C 42,37 53,17 49,-4 C 27,15 0,5 -7,-15 C -12,-29 0,-44 25,-48 Z" {...props} />;
@@ -7,12 +8,14 @@ export function Moon({ ...props }) {
 
 export default function Clock({ onSleep, onMeals, now = new Date(), record, intro = false }) {
   const arc = sleepArc(record?.sleepStart, record?.sleepEnd);
+  const experience = recordExperience(record);
   const hands = clockHands(now);
   const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map(value => String(value).padStart(2, '0')).join(':');
   const activate = action => event => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); action(); }
   };
-  return <svg className="clock" viewBox="0 0 480 480" aria-label={`12 小时时钟，当前时间 ${time}，点击月亮记录睡眠，点击太阳记录吃饭`}>
+  const status = `${experience.mealRecorded ? '吃饭已记录' : '吃饭未记录'}，${experience.sleepRecorded ? '睡眠已记录' : '睡眠未记录'}${experience.starReady ? '，今日星星已生成' : ''}`;
+  return <svg className="clock" viewBox="0 0 480 480" aria-label={`12 小时时钟，当前时间 ${time}，${status}，点击月亮记录睡眠，点击太阳记录吃饭`}>
     <defs><clipPath id="clock-face"><circle cx="240" cy="240" r="184" /></clipPath></defs>
     <g className="clock-dial" transform="rotate(180 240 240)">
     <circle cx="240" cy="240" r="231" fill="#f7f5ee" stroke="#191c21" strokeWidth="8" />
@@ -29,11 +32,11 @@ export default function Clock({ onSleep, onMeals, now = new Date(), record, intr
       </g>
       <path d="M74 308 C57 298 69 275 87 280 C89 258 123 252 134 276 C153 269 169 285 160 301 C171 313 158 326 144 325 H88 C76 325 69 318 74 308Z" transform="rotate(180 116 294)" fill="#fffdf5" stroke="#191c21" strokeWidth="6" strokeLinejoin="round" />
       <path d="M352 374 C339 363 347 346 361 347 C368 326 396 328 403 347 C423 342 435 359 425 372 C430 385 417 393 405 390 H368 C356 392 347 384 352 374Z" transform="rotate(180 390 360)" fill="#fffdf5" stroke="#191c21" strokeWidth="6" strokeLinejoin="round" />
-      <g className="celestial moon-button" role="button" tabIndex="0" aria-label="记录睡眠" onClick={event => { touchFeedback(event, 'moon'); onSleep(); }} onKeyDown={activate(onSleep)}>
+      <g className={`celestial moon-button ${experience.sleepRecorded ? 'is-recorded' : ''}`} role="button" tabIndex="0" aria-label={experience.sleepRecorded ? '睡眠已记录，点击修改' : '记录睡眠'} onClick={event => { touchFeedback(event, 'moon'); onSleep(); }} onKeyDown={activate(onSleep)}>
         <circle className="hit-area" cx="218" cy="156" r="74" />
         <g transform="translate(218 150) rotate(168)"><Moon fill="#ffdc71" stroke="#191c21" strokeWidth="7" strokeLinejoin="round" /></g>
       </g>
-      <g className="celestial sun-button" role="button" tabIndex="0" aria-label="记录吃饭" onClick={event => { touchFeedback(event, 'sun'); onMeals(); }} onKeyDown={activate(onMeals)}>
+      <g className={`celestial sun-button ${experience.mealRecorded ? 'is-recorded' : ''}`} role="button" tabIndex="0" aria-label={experience.mealRecorded ? '吃饭已记录，点击修改' : '记录吃饭'} onClick={event => { touchFeedback(event, 'sun'); onMeals(); }} onKeyDown={activate(onMeals)}>
         <circle className="hit-area" cx="260" cy="326" r="82" />
         <polygon points={starPoints(260, 326, 72, 0.76, 12)} fill="#ffcd55" stroke="#191c21" strokeWidth="6.5" strokeLinejoin="round" />
         <circle cx="260" cy="326" r="46" fill="#ffda6e" stroke="#191c21" strokeWidth="6" />
@@ -50,6 +53,13 @@ export default function Clock({ onSleep, onMeals, now = new Date(), record, intr
       const position = clockPoint(timeMinutes(time));
       return <circle className="meal-marker" key={index} data-time={time} cx={position.x} cy={position.y} style={{ cx: position.x, cy: position.y, animationDelay: `${index * 75}ms` }} r="7" fill="#ffb34e" stroke="#191c21" strokeWidth="3" pointerEvents="none"><title>{`吃饭 ${time}`}</title></circle>;
     })}
+    <g className="clock-record-status" pointerEvents="none" aria-hidden="true">
+      {experience.mealRecorded && <g className="recorded-check sun-check" transform="translate(166 112)"><circle r="13" /><path d="m-6 0 4 5 9-11" /></g>}
+      {experience.sleepRecorded && <g className="recorded-check moon-check" transform="translate(324 365)"><circle r="13" /><path d="m-6 0 4 5 9-11" /></g>}
+      {experience.sleepRecorded && <g className="sleep-status-stars">
+        <polygon points={starPoints(318, 287, 7)} /><polygon points={starPoints(205, 352, 5)} /><polygon points={starPoints(337, 322, 4)} />
+      </g>}
+    </g>
     {Array.from({ length: 60 }, (_, i) => {
       if (i % 15 === 0) return null;
       const a = i * Math.PI / 30;
@@ -75,6 +85,10 @@ export default function Clock({ onSleep, onMeals, now = new Date(), record, intr
       </g>
       <circle cx="240" cy="240" r="9" fill="#191c21" /><circle cx="240" cy="240" r="3.5" fill="#c75942" />
     </g>
+    {(experience.starWaiting || experience.starReady) && <g className={`today-star-anchor ${experience.starReady ? 'is-ready' : 'is-waiting'}`} pointerEvents="none" aria-hidden="true">
+      <polygon className="today-star-shape" points={starPoints(240, 240, experience.starReady ? 16 * record.starSize : 14)} fill={experience.starReady ? '#ffe4a0' : '#f7f5ee'} opacity={experience.starReady ? record.starBrightness : .55} stroke={experience.starReady ? '#191c21' : '#777d78'} strokeWidth="2.2" strokeLinejoin="round" />
+      {experience.starReady && <circle cx="240" cy="240" r="2.4" fill="#c75942" opacity={Math.max(.55, record.starBrightness)} />}
+    </g>}
     {intro && <g className="clock-intro" pointerEvents="none" textAnchor="middle"><g><rect x="172" y="204" width="96" height="27" rx="13" fill="#fffdf5" stroke="#191c21" strokeWidth="2" /><text x="220" y="223" fill="#191c21">点太阳 · 吃饭</text></g><g><rect x="211" y="389" width="102" height="27" rx="13" fill="#ffdc71" stroke="#191c21" strokeWidth="2" /><text x="262" y="408" fill="#191c21">点月亮 · 睡眠</text></g></g>}
   </svg>;
 }

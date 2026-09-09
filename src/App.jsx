@@ -13,6 +13,9 @@ import { dateKey, makeRecord, suggestedSleep, starPoints } from './model';
 import { cloudbaseDb, userEmail, userId } from './cloudbase';
 import { loadCloudRecords, syncCloudRecord } from './cloudRecords';
 import { isEntitlementActive, loadEntitlement } from './pro';
+import { initialStarMapScale, isFirstStar, successfulSaveHaptic } from './experience';
+import StarFlight from './StarFlight';
+import { useReducedMotion } from './motion';
 
 const AuthControl = lazy(() => import('./AuthControl'));
 const ProDialog = lazy(() => import('./ProDialog'));
@@ -37,13 +40,16 @@ export default function App() {
   const [modal, setModal] = useState(null);
   const [dataOpen, setDataOpen] = useState(false);
   const [notice, setNotice] = useState(null);
-  const [mapFocus, setMapFocus] = useState(0);
+  const [mapVisit, setMapVisit] = useState({ id: 0, arrivalDate: null });
   const [pulse, setPulse] = useState(null);
+  const [feedback, setFeedback] = useState({ phase: 'idle', id: 0 });
   const [returned, setReturned] = useState(null);
   const [diarySaved, setDiarySaved] = useState(0);
-  const closeTimer = useRef(null), pendingPulse = useRef(null);
+  const closeTimer = useRef(null), feedbackTimer = useRef(null), pendingPulse = useRef(null);
+  const todayMainRef = useRef(null), mapNavRef = useRef(null);
   const syncGeneration = useRef(0), syncQueues = useRef(new Map());
   const music = useBgm();
+  const reducedMotion = useReducedMotion();
   const [intro, setIntro] = useState(() => { try { return !localStorage.getItem(ONBOARDING_KEY) && !Object.keys(initial.records).length; } catch { return false; } });
   const [diaryDate, setDiaryDate] = useState(null);
   const [mediaDates, setMediaDates] = useState([]);
@@ -62,6 +68,7 @@ export default function App() {
   const mapRecords = useRef(allRecords);
   if (!diaryDate) mapRecords.current = allRecords;
   const today = dateKey(now);
+  const defaultMapScale = useMemo(() => initialStarMapScale(allRecords, today), [allRecords, today]);
   useEffect(() => {
     let active = true;
     listMediaDates().then(dates => { if (active) { setMediaDates(dates); setMediaReadError(''); } }).catch(() => { if (active) setMediaReadError('暂时无法读取本地媒体记录，请检查浏览器存储权限后刷新。'); });
@@ -136,7 +143,24 @@ export default function App() {
     const timer = setTimeout(() => setPulse(null), 1100);
     return () => clearTimeout(timer);
   }, [pulse]);
-  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  useEffect(() => {
+    clearTimeout(feedbackTimer.current);
+    if (feedback.phase === 'revealing' && !modal) {
+      if (!feedback.newStar || reducedMotion) {
+        setFeedback(current => current.id === feedback.id ? { ...current, phase: feedback.newStar ? 'complete' : 'idle' } : current);
+      } else {
+        feedbackTimer.current = setTimeout(() => setFeedback(current => current.id === feedback.id ? { ...current, phase: 'flying' } : current), 420);
+      }
+    } else if (feedback.phase === 'complete') {
+      if (feedback.newStar) {
+        setNotice({ text: '今天的星，留下了。', star: true, record: feedback.record, id: feedback.id });
+        setPulse(feedback.type);
+      }
+      feedbackTimer.current = setTimeout(() => setFeedback(current => current.id === feedback.id ? { phase: 'idle', id: feedback.id } : current), 80);
+    }
+    return () => clearTimeout(feedbackTimer.current);
+  }, [feedback, modal, reducedMotion]);
+  useEffect(() => () => { clearTimeout(closeTimer.current); clearTimeout(feedbackTimer.current); }, []);
   function closeRecord() {
     clearTimeout(closeTimer.current); setModal(null);
     if (pendingPulse.current) { setPulse(pendingPulse.current); pendingPulse.current = null; }
@@ -146,6 +170,14 @@ export default function App() {
     setError(''); setNotice(null); setIntro(false);
     try { localStorage.setItem(ONBOARDING_KEY, 'seen'); } catch { /* Recording reports storage errors separately. */ }
     setModal({ type, date, fromDiary });
+  }
+  function beginFeedback(type) {
+    setFeedback({ phase: 'confirming', type, id: Date.now(), newStar: false });
+  }
+  function openStarMap(arrivalDate = null) {
+    setMapVisit(current => ({ id: current.id + 1, arrivalDate }));
+    setPage('map');
+    setNotice(null);
   }
   function enqueueCloudSync(uid, saved) {
     const generation = syncGeneration.current;
@@ -184,19 +216,37 @@ export default function App() {
   function save(patch) {
     const before = records[modal.date];
     const saved = writeRecord(modal.date, patch);
-    if (!saved) return;
+    if (!saved) {
+      setFeedback(current => ({ phase: 'idle', id: current.id }));
+      return false;
+    }
+    successfulSaveHaptic();
     const mood = patch.mood ?? records[modal.date]?.mood;
     clearTimeout(closeTimer.current);
     const askMood = !modal.fromDiary && modal.type !== 'mood' && mood == null;
-    if (askMood) { pendingPulse.current = modal.type; setModal({ type: 'mood', date: modal.date }); }
-    else if (modal.type === 'mood' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      closeTimer.current = setTimeout(() => { closeRecord(); if (modal.fromDiary) setDiarySaved(value => value + 1); }, 180);
-    } else { closeRecord(); if (modal.fromDiary) setDiarySaved(value => value + 1); }
-    if (!modal.fromDiary) {
-      const newStar = saved.starSize != null && saved.starBrightness != null && !(before?.starSize != null && before?.starBrightness != null);
-      setNotice({ text: newStar ? '今天的星，留下了。' : modal.type === 'sleep' ? '睡眠已保存' : modal.type === 'meals' ? '吃饭已保存' : '心情已保存', star: newStar, record: saved, id: Date.now() });
-      if (!askMood && modal.type !== 'mood') setPulse(modal.type);
+    const feedbackType = pendingPulse.current ?? modal.type;
+    const newStar = isFirstStar(before, saved);
+    if (askMood) {
+      pendingPulse.current = modal.type;
+      setFeedback(current => ({ ...current, phase: 'revealing', type: modal.type, record: saved }));
+      setModal({ type: 'mood', date: modal.date });
+    } else {
+      closeRecord();
+      if (modal.fromDiary) setDiarySaved(value => value + 1);
     }
+    if (!modal.fromDiary) {
+      if (newStar) {
+        const id = Date.now();
+        setNotice(null);
+        setFeedback({ phase: 'revealing', type: feedbackType, record: saved, id, newStar: true });
+      } else if (!askMood) {
+        const id = Date.now();
+        setFeedback({ phase: 'complete', type: feedbackType, record: saved, id, newStar: false });
+        setNotice({ text: modal.type === 'sleep' ? '睡眠已保存' : modal.type === 'meals' ? '吃饭已保存' : '心情已保存', star: false, record: saved, id });
+        setPulse(feedbackType);
+      }
+    }
+    return true;
   }
   function migrateLegacy() {
     try {
@@ -216,9 +266,10 @@ export default function App() {
     {!modal && !diaryDate && !dataOpen && <div className="global-music"><MusicButton music={music} /></div>}
     {page === 'today' ? <>
       <header className="date"><time dateTime={today}>{now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日</time></header>
-      <main className={`today-main ${pulse ? `saved-${pulse}` : ''}`}><Clock now={now} record={records[today]} intro={intro} onSleep={() => open('sleep')} onMeals={() => open('meals')} /></main>
-    </> : page === 'map' ? <StarMap key={mapFocus} focusToday={mapFocus > 0} records={mapRecords.current} today={today} onDay={setDiaryDate} returned={returned} effectsPaused={!!diaryDate || !!modal} /> : <><Statistics key={`${cloudUid || 'guest'}-${isPro ? 'pro' : 'free'}`} records={allRecords} today={today} isPro={isPro} onRequestPro={() => setProOpen(true)} /><button className="data-entry" onClick={() => setDataOpen(true)}>数据与使用 <span aria-hidden="true">↗</span></button></>}
-    {notice && !modal && page === 'today' && <div className={`save-notice ${notice.star ? 'star-arrival' : ''}`} role="status" key={notice.id}>{notice.star && <svg className="saved-star" viewBox="-40 -40 80 80" aria-hidden="true"><polygon points={starPoints(0, 0, 18 * notice.record.starSize)} fill="#ffe4a0" opacity={notice.record.starBrightness} /></svg>}<span>{notice.text}</span>{notice.star && <button onClick={() => { setMapFocus(value => value + 1); setPage('map'); setNotice(null); }}>看看今天的星 <span aria-hidden="true">↗</span></button>}</div>}
+      <main ref={todayMainRef} className={`today-main feedback-${feedback.phase} ${pulse ? `saved-${pulse}` : ''}`}><Clock now={now} record={records[today]} intro={intro} onSleep={() => open('sleep')} onMeals={() => open('meals')} /></main>
+    </> : page === 'map' ? <StarMap key={mapVisit.id} initialScale={mapVisit.arrivalDate ? 'month' : defaultMapScale} arrivalDate={mapVisit.arrivalDate} records={mapRecords.current} today={today} onDay={setDiaryDate} returned={returned} effectsPaused={!!diaryDate || !!modal} /> : <><Statistics key={`${cloudUid || 'guest'}-${isPro ? 'pro' : 'free'}`} records={allRecords} today={today} isPro={isPro} onRequestPro={() => setProOpen(true)} /><button className="data-entry" onClick={() => setDataOpen(true)}>数据与使用 <span aria-hidden="true">↗</span></button></>}
+    {notice && !modal && page === 'today' && <div className={`save-notice ${notice.star ? 'star-arrival' : ''}`} role="status" key={notice.id}>{notice.star && <svg className="saved-star" viewBox="-40 -40 80 80" aria-hidden="true"><polygon points={starPoints(0, 0, 18 * notice.record.starSize)} fill="#ffe4a0" opacity={notice.record.starBrightness} /></svg>}<span>{notice.text}</span>{notice.star && <button onClick={() => openStarMap(today)}>看看今天的星 <span aria-hidden="true">↗</span></button>}</div>}
+    {feedback.phase === 'flying' && feedback.record && page === 'today' && <StarFlight sourceRef={todayMainRef} targetRef={mapNavRef} record={feedback.record} onDone={() => setFeedback(current => current.id === feedback.id ? { ...current, phase: 'complete' } : current)} />}
     {error && !modal && <p className="page-error" role="alert">{error}</p>}
     {syncError && !modal && <p className="page-error" role="alert">{syncError}</p>}
     {page === 'statistics' && entitlementState.status === 'error' && <p className="page-error" role="alert">Pro 状态暂时无法读取，请稍后刷新。</p>}
@@ -233,7 +284,7 @@ export default function App() {
       <button className={page === 'today' ? 'active' : ''} aria-current={page === 'today' ? 'page' : undefined} onClick={() => setPage('today')}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5" /><path d="M12 7.5V12l3 2" /></svg><span>Today</span>
       </button>
-      <button className={page === 'map' ? 'active' : ''} aria-current={page === 'map' ? 'page' : undefined} onClick={() => setPage('map')}>
+      <button ref={mapNavRef} className={page === 'map' ? 'active' : ''} aria-current={page === 'map' ? 'page' : undefined} onClick={() => openStarMap(null)}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z" /></svg><span>Star Map</span>
       </button>
       <button className={page === 'statistics' ? 'active' : ''} aria-current={page === 'statistics' ? 'page' : undefined} onClick={() => setPage('statistics')}>
@@ -241,7 +292,7 @@ export default function App() {
       </button>
     </nav>
     {diaryDate && <DiaryDialog music={music} key={diaryDate} date={diaryDate} record={allRecords[diaryDate]} savedRevision={diarySaved} onClose={() => { setReturned({ date: diaryDate, id: Date.now() }); setDiaryDate(null); }} onEdit={type => open(type, diaryDate, true)} onSaveText={diaryText => writeRecord(diaryDate, { diaryText })} onMediaChanged={() => setMediaRevision(value => value + 1)} />}
-    {modal && <RecordDialog music={music} key={`${modal.type}-${modal.date}`} type={modal.type} suggestion={suggestedSleep(records, modal.date)} record={records[modal.date]} onSave={save} onClose={closeRecord} error={error} />}
+    {modal && <RecordDialog music={music} key={`${modal.date}-${modal.fromDiary ? 'diary' : 'today'}`} type={modal.type} suggestion={suggestedSleep(records, modal.date)} record={records[modal.date]} onSave={save} onConfirming={beginFeedback} onClose={closeRecord} error={error} />}
     {dataOpen && <DataDialog music={music} recordOwner={cloudUid || null} onClose={() => setDataOpen(false)} onRestored={refreshRecords} />}
     {proOpen && <Suspense fallback={null}><ProDialog key={cloudUid || 'guest'} uid={cloudUid} email={cloudEmail} onClose={() => setProOpen(false)} onEntitlement={value => {
       if (value?.owner_id === cloudUid) setEntitlementState({ ownerUid: cloudUid, status: 'ready', value });

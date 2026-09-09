@@ -1,13 +1,14 @@
 :root { font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; color: #191c21; background: #f7f5ee; font-synthesis: none; -webkit-font-smoothing: antialiased; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 280px; }
+body { margin: 0; min-width: 280px; overflow-x: hidden; }
 button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 3px solid #a77925; outline-offset: 6px; }
-.app { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; background: #f7f5ee; }
+.app { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; overflow-x: hidden; background: #f7f5ee; }
 .date { text-align: center; font-size: 15px; font-weight: 500; letter-spacing: 2px; padding: 48px 16px 0; padding: max(48px, env(safe-area-inset-top)) 16px 0; }
-.today-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 13px 36px; }
-.clock { display: block; width: 65vh; max-width: 100%; width: min(100%, 560px, 65svh); height: auto; overflow: visible; }
+.today-main { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 32px 13px 36px; }
+.clock { display: block; flex: 0 1 auto; min-width: 0; width: calc(100vw - 26px); max-width: 560px; height: auto; overflow: visible; }
+@supports (width: min(1px, 2px)) { .clock { width: min(calc(100vw - 26px), 560px, 65svh); } }
 .clock-numbers { font-family: "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; font-size: 28px; font-weight: 800; }
 .hit-area { fill: transparent; }
 .celestial { cursor: pointer; transform-box: fill-box; transform-origin: center; transition: transform 160ms ease; outline: none; }
@@ -15,7 +16,7 @@ button:focus-visible { outline: 3px solid #a77925; outline-offset: 6px; }
 @media (hover: hover) { .celestial:hover { transform: rotate(-4deg) scale(1.04); } }
 .celestial:active { transform: scale(.95); }
 .bottom-nav { width: 326px; max-width: calc(100% - 32px); margin: 0 auto; display: flex; justify-content: space-between; padding: 8px 0 25px; padding: 8px 0 max(25px, env(safe-area-inset-bottom)); flex-shrink: 0; }
-.bottom-nav button { position: relative; border: 0; background: none; display: flex; flex-direction: column; align-items: center; min-width: 84px; padding: 10px 8px 16px; color: #92938d; font-size: 11px; letter-spacing: .65px; }
+.bottom-nav button { position: relative; flex: 1 1 0; width: 33.333%; min-width: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 16px; color: #92938d; font-size: 11px; letter-spacing: .45px; white-space: nowrap; }
 .bottom-nav svg { width: 23px; height: 23px; margin-bottom: 7px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .bottom-nav button.active { color: #191c21; }
 .bottom-nav button.active::after { content: ''; width: 15px; height: 3px; border-radius: 2px; position: absolute; bottom: 3px; background: currentColor; }

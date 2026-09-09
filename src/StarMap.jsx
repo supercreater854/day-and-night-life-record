@@ -11,8 +11,8 @@ function crop(points) {
   return `${left} ${top} ${width} ${height}`;
 }
 
-export default function StarMap({ records, today, onDay, focusToday = false, returned, effectsPaused }) {
-  const [scale, setScale] = useState(focusToday ? 'month' : 'year');
+export default function StarMap({ records, today, onDay, initialScale = 'year', arrivalDate = null, returned, effectsPaused }) {
+  const [scale, setScale] = useState(initialScale);
   const [anchor, setAnchor] = useState(today);
   const [highlight, setHighlight] = useState(true);
   const [returnHighlight, setReturnHighlight] = useState(null);
@@ -69,13 +69,13 @@ export default function StarMap({ records, today, onDay, focusToday = false, ret
           const action = hasData(record) ? '日记' : scale === 'year' ? '放大月份' : scale === 'month' ? '放大这一周' : '日记';
           return <g key={p.date} data-date={p.date} data-lit={String(lit)} data-size={record?.starSize ?? ''} data-brightness={record?.starBrightness ?? ''}
             role={canOpen ? 'button' : undefined} tabIndex={canOpen ? 0 : undefined} aria-label={canOpen ? `${p.date} ${action}` : undefined}
-            className={canOpen ? `daily-star ${returnHighlight === p.date ? 'returned-star' : ''}` : undefined} onClick={canOpen ? event => { event.stopPropagation(); activate(p.date); } : undefined}
+            className={canOpen ? `daily-star ${returnHighlight === p.date ? 'returned-star' : ''} ${arrivalDate === p.date ? 'arrival-star' : ''}` : undefined} onClick={canOpen ? event => { event.stopPropagation(); activate(p.date); } : undefined}
             onKeyDown={canOpen ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(p.date); } } : undefined}>
             <title>{p.date}{hasData(record) ? '' : ' · 未记录'}</title>
             {canOpen && <circle className="star-hit-area" cx={p.x} cy={p.y} r={scale === 'week' ? 18 : 12} fill="transparent" />}
             <g className="star-visual" style={{ transformOrigin: `${p.x}px ${p.y}px` }}><polygon className="star-shape" points={starPoints(0, 0, 10)} style={{ transform: `translate(${p.x}px, ${p.y}px) scale(${radius / 10})`, opacity: lit ? record.starBrightness : scale === 'week' ? .3 : .105 }} fill={lit ? '#ffe4a0' : 'none'} stroke={lit ? '#ffe4a0' : '#b9c9e1'} strokeWidth={lit ? .7 : .8} strokeLinejoin="round" pointerEvents="none" /></g>
             {returnHighlight === p.date && <circle className="return-ring" cx={p.x} cy={p.y} r={radius + 8} fill="none" stroke="#ffe4a0" strokeWidth=".8" pointerEvents="none" />}
-            {p.date === today && highlight && <g className="today-location" pointerEvents="none"><circle cx={p.x} cy={p.y} r={Math.max(radius + 5, 14)} fill="none" stroke="#ffe4a0" strokeWidth=".7" strokeDasharray="2 4" opacity=".7" />{scale !== 'week' && <text x={p.x} y={p.y - Math.max(radius + 11, 22)} textAnchor="middle">今天</text>}</g>}
+            {p.date === today && highlight && <g className={`today-location ${arrivalDate === p.date ? 'is-arriving' : ''}`} pointerEvents="none"><circle cx={p.x} cy={p.y} r={Math.max(radius + 5, 14)} fill="none" stroke="#ffe4a0" strokeWidth=".7" strokeDasharray="2 4" opacity=".7" />{scale !== 'week' && <text x={p.x} y={p.y - Math.max(radius + 11, 22)} textAnchor="middle">今天</text>}</g>}
             {scale === 'week' && <text x={p.x} y={p.y + Math.max(radius + 14, 27)} textAnchor="middle" className="star-date">{p.date.slice(5).replace('-', '.')}{p.date === today ? ' · 今天' : ''}</text>}
           </g>;
         })}

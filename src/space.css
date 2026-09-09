@@ -9,41 +9,7 @@
 .record-dialog.sleep > .music-control, .record-dialog.meals > .music-control, .record-dialog.mood > .music-control { position: absolute; top: 25px; top: max(25px, env(safe-area-inset-top)); left: 22px; }
 .image-viewer > .music-control { position: absolute; top: 25px; left: 22px; }
 .space-effects { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; contain: layout paint; }
-.space-effects * { pointer-events: none; }
 .ambient-spark { position: absolute; color: #d5e6ff; font-size: 12px; opacity: .1; animation: ambient-twinkle 6s ease-in-out infinite; transform-origin: center; }
-@keyframes ambient-twinkle { 0%, 35%, 100% { opacity: .08; transform: scale(.65); } 55% { opacity: .58; transform: scale(1.12); } 75% { opacity: .16; transform: scale(.85); } }
-.flight-area { position: absolute; inset: 0; width: 100%; max-width: 650px; width: min(100%, 650px); margin-left: auto; margin-right: auto; margin-inline: auto; }
-.meteor { position: absolute; top: 0; left: 0; width: 88px; opacity: 0; offset-anchor: 97% 50%; offset-rotate: auto; animation: meteor-pass 60s linear infinite both; }
-.meteor-one { offset-path: var(--meteor-a); animation-delay: 3s; }
-.meteor-two { width: 58px; offset-path: var(--meteor-b); animation-delay: 25s; }
-.meteor svg, .space-rocket svg, .space-ufo svg { display: block; width: 100%; }
-@keyframes meteor-pass {
-  0% { offset-distance: 0%; opacity: 0; transform: scaleX(.35); }
-  .35% { opacity: .8; transform: scaleX(1); }
-  1.6% { opacity: .6; }
-  2.4% { offset-distance: 100%; opacity: 0; transform: scaleX(.55); }
-  100% { offset-distance: 100%; opacity: 0; transform: scaleX(.55); }
-}
-.space-rocket { position: absolute; top: 0; left: 0; width: 27px; opacity: 0; offset-path: var(--rocket-path); offset-rotate: auto 90deg; animation: rocket-flight 60s 10s linear infinite both; }
-@keyframes rocket-flight {
-  0% { offset-distance: 0%; opacity: 0; transform: scale(.85); animation-timing-function: cubic-bezier(.42, 0, .65, 1); }
-  16% { offset-distance: 100%; opacity: 0; transform: scale(.62); }
-  100% { offset-distance: 100%; opacity: 0; transform: scale(.62); }
-}
-/* Independent visibility keeps the path's acceleration continuous. */
-.space-rocket { animation-name: rocket-flight, visitor-visibility; animation-duration: 60s; animation-delay: 10s; }
-@keyframes visitor-visibility { 0% { opacity: 0; } 2%, 12% { opacity: .85; } 16%, 100% { opacity: 0; } }
-.rocket-flame { animation: flame-flicker 480ms ease-in-out infinite alternate; transform-box: fill-box; transform-origin: top center; }
-@keyframes flame-flicker { from { transform: scaleY(.8); opacity: .8; } to { transform: scaleY(1.08); opacity: 1; } }
-.space-ufo { position: absolute; top: 0; left: 0; width: 43px; opacity: 0; offset-path: var(--ufo-path); offset-rotate: 0deg; animation: ufo-flight 60s 36s linear infinite both, visitor-visibility 60s 36s linear infinite both; }
-@keyframes ufo-flight {
-  0% { offset-distance: 0%; transform: scale(.76); animation-timing-function: cubic-bezier(.24, .32, .6, 1); }
-  16% { offset-distance: 100%; transform: scale(.9); }
-  100% { offset-distance: 100%; transform: scale(.9); }
-}
-.ufo-cabin { animation: ufo-hover 3.8s ease-in-out infinite; }
-@keyframes ufo-hover { 0%, 100% { transform: translateY(-2px) rotate(-3deg); } 50% { transform: translateY(2px) rotate(3deg); } }
-.ufo-lights { animation: cabin-light 2.6s ease-in-out infinite alternate; }
-@keyframes cabin-light { from { opacity: .35; } to { opacity: .95; } }
+@keyframes ambient-twinkle { 0%, 35%, 100% { opacity: .07; transform: scale(.7); } 55% { opacity: .42; transform: scale(1.05); } 75% { opacity: .14; transform: scale(.88); } }
 .effects-paused *, .effects-paused { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: reduce) { .space-effects { display: none; } }
