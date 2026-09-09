@@ -8,7 +8,6 @@ import './interaction.css';
 import './space.css';
 import './auth.css';
 import './pro.css';
-import './redesign.css';
 import { recoverRestore } from './repository';
 
 const root = createRoot(document.getElementById('root'));

@@ -7,11 +7,10 @@ test('clock maps local 00/06/12/18 hours exactly and advances each minute', () =
   assert.equal(clockAngle(new Date(2026, 8, 4, 6, 1)), 180.5);
   assert.deepEqual(clockPoint(180, 100), { x: 340, y: 240 });
 });
-test('time selectors enforce quarter-hour intervals and shortcuts preserve wake time', () => {
-  assert.equal(TIME_OPTIONS.length, 96);
+test('time selectors enforce half-hour intervals and shortcuts preserve wake time', () => {
+  assert.equal(TIME_OPTIONS.length, 48);
   assert.equal(timeMinutes('23:30'), 1410);
-  assert.equal(timeMinutes('08:15'), 495);
-  for (const invalid of ['24:00', '08:10', '08:60', '', null]) assert.equal(timeMinutes(invalid), null);
+  for (const invalid of ['24:00', '08:15', '08:60', '', null]) assert.equal(timeMinutes(invalid), null);
   assert.deepEqual(defaultSleep(3), { sleepStart: '00:00', sleepEnd: '07:30' });
   assert.deepEqual(defaultSleep(0, '07:00'), { sleepStart: '02:30', sleepEnd: '07:00' });
   assert.deepEqual(defaultSleep(4, '07:30'), { sleepStart: '23:00', sleepEnd: '07:30' });
@@ -25,12 +24,12 @@ test('cross-midnight sleep, zero hours, and arc sweep are correct', () => {
   assert.equal(sleepArc('00:00', '00:00'), '');
   assert.equal(formatDuration(432), '7h 12m');
 });
-test('final sleep interval and meal times recalculate the weighted star rules', () => {
+test('final sleep interval and meal choices recalculate the unchanged star rules', () => {
   for (const [minutes, score] of [[270, 0], [300, 1], [360, 3], [420, 5], [480, 4]]) assert.equal(sleepScoreFor(minutes), score);
   const max = makeRecord('2026-09-04', {}, { sleepStart: '23:30', sleepEnd: '07:00', mealCount: 3, mealTiming: 2, mealTimes: ['08:00', '12:30', '18:30'], mood: 5 });
-  assert.equal(max.sleepScore, 5); assert.equal(max.mealScore, 5); assert.equal(max.starSize, 1.65);
+  assert.equal(max.sleepScore, 5); assert.equal(max.mealScore, 5); assert.equal(max.starSize, 1.7);
   const edited = makeRecord(max.date, max, { sleepEnd: '03:30', mealCount: 0, mealTiming: 0, mood: 1 });
-  assert.equal(edited.starSize, .55); assert.equal(edited.starBrightness, .28); assert.deepEqual(edited.mealTimes, []);
+  assert.equal(edited.starSize, .45); assert.equal(edited.starBrightness, .15); assert.deepEqual(edited.mealTimes, []);
 });
 test('week starts Monday; month/year navigation and leap-day totals are correct', () => {
   assert.equal(periodFor('week', '2026-09-04').start, '2026-08-31');
@@ -68,5 +67,5 @@ test('legacy JSON is read without fabricating sleep or meal times and retains di
   assert.equal(result.sleepScore, 5); assert.equal(result.sleepStart, null); assert.equal(result.sleepEnd, null);
   assert.deepEqual(result.mealTimes, []); assert.equal(result.schemaVersion, 3);
   const diary = makeRecord(old.date, result, { diaryText: '一行\n两行' });
-  assert.equal(diary.diaryText, '一行\n两行'); assert.equal(diary.starSize, 1.3);
+  assert.equal(diary.diaryText, '一行\n两行'); assert.equal(diary.starSize, 1.35);
 });

@@ -17,7 +17,7 @@ test('daily experience derives sleep, meal, waiting, and ready states without st
 
 test('only the transition from no complete star to complete star counts as a first star', () => {
   const activity = makeRecord(date, {}, { mealCount: 2, mealTiming: 1 });
-  const ready = makeRecord(date, activity, { mood: 3, sleepScore: 3 });
+  const ready = makeRecord(date, activity, { mood: 3 });
   assert.equal(isFirstStar(activity, ready), true);
   assert.equal(isFirstStar(ready, makeRecord(date, ready, { mood: 5 })), false);
   assert.equal(isFirstStar(undefined, activity), false);
@@ -27,7 +27,7 @@ test('early accounts open the current month and established accounts open the ye
   const records = {};
   for (let day = 1; day <= 30; day++) {
     const key = `2026-09-${String(day).padStart(2, '0')}`;
-    records[key] = makeRecord(key, {}, { mood: 4, mealCount: 2, mealTiming: 1, sleepScore: 3 });
+    records[key] = makeRecord(key, {}, { mood: 4, mealCount: 2, mealTiming: 1 });
   }
   assert.equal(initialStarMapScale(Object.fromEntries(Object.entries(records).slice(0, 29)), date), 'month');
   assert.equal(initialStarMapScale(records, date), 'year');

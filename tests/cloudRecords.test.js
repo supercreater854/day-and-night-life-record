@@ -28,7 +28,7 @@ test('cloud payload keeps the daily record schema and omits local media state', 
   assert.equal(payload.date, record.date);
   assert.equal(payload.sleepScore, 5);
   assert.equal(payload.mealScore, 5);
-  assert.equal(payload.starSize, 1.65);
+  assert.equal(payload.starSize, 1.7);
   assert.equal(payload.starBrightness, 1);
   assert.equal(payload.diaryText, '今天很好');
   assert.equal(Object.hasOwn(payload, 'hasMedia'), false);

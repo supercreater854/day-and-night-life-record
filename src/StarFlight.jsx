@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { calculateDayScore, deriveStarAppearance, starPoints } from './model';
+import { starPoints } from './model';
 import { useReducedMotion } from './motion';
 
 export default function StarFlight({ sourceRef, targetRef, record, onDone }) {
@@ -7,8 +7,6 @@ export default function StarFlight({ sourceRef, targetRef, record, onDone }) {
   const done = useRef(onDone);
   const star = useRef(null);
   const [path, setPath] = useState(null);
-  const score = calculateDayScore(record);
-  const appearance = deriveStarAppearance(score.dayScore, score.completeness);
   done.current = onDone;
 
   useLayoutEffect(() => {
@@ -41,6 +39,6 @@ export default function StarFlight({ sourceRef, targetRef, record, onDone }) {
 
   if (!path) return null;
   return <div ref={star} className="star-flight" aria-hidden="true" style={{ left: path.startX, top: path.startY }}>
-    <svg viewBox="-34 -34 68 68"><polygon points={starPoints(0, 0, Math.min(28, 16 * appearance.size))} fill={appearance.color} stroke="#191c21" strokeWidth="2.5" opacity={appearance.brightness} strokeLinejoin="round" /></svg>
+    <svg viewBox="-34 -34 68 68"><polygon points={starPoints(0, 0, Math.min(28, 16 * record.starSize))} fill="#ffe4a0" stroke="#191c21" strokeWidth="2.5" opacity={record.starBrightness} strokeLinejoin="round" /></svg>
   </div>;
 }

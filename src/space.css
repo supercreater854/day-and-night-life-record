@@ -9,8 +9,7 @@
 .record-dialog.sleep > .music-control, .record-dialog.meals > .music-control, .record-dialog.mood > .music-control { position: absolute; top: 25px; top: max(25px, env(safe-area-inset-top)); left: 22px; }
 .image-viewer > .music-control { position: absolute; top: 25px; left: 22px; }
 .space-effects { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; contain: layout paint; }
-.ambient-spark { position: absolute; color: #d5e6ff; font-size: 12px; opacity: .1; animation: ambient-twinkle 10s ease-in-out infinite; transform-origin: center; }
-.ambient-spark.layer-1 { color: #ffe4a0; font-size: 16px; opacity: .07; }
-@keyframes ambient-twinkle { 0%, 35%, 100% { opacity: .035; transform: scale(.65); } 55% { opacity: .24; transform: scale(1.05); } 75% { opacity: .09; transform: scale(.88); } }
+.ambient-spark { position: absolute; color: #d5e6ff; font-size: 12px; opacity: .1; animation: ambient-twinkle 6s ease-in-out infinite; transform-origin: center; }
+@keyframes ambient-twinkle { 0%, 35%, 100% { opacity: .07; transform: scale(.7); } 55% { opacity: .42; transform: scale(1.05); } 75% { opacity: .14; transform: scale(.88); } }
 .effects-paused *, .effects-paused { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: reduce) { .space-effects { display: none; } }
